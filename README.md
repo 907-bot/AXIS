@@ -9,7 +9,7 @@ AXIS is a research-grade embodied AI platform that transforms a standard webcam 
 docker-compose up -d
 
 # Open the application
-open http://localhost:8000
+open http://localhost:8005
 ```
 
 ## Docker Commands
@@ -38,7 +38,7 @@ make shell
 pip install -r requirements.txt
 
 # Start backend
-PYTHONPATH=/workspace/project/AXIS python -m uvicorn backend.api.server:app --host 0.0.0.0 --port 8000
+PYTHONPATH=/path/to/AXIS python -m uvicorn backend.api.server:app --host 0.0.0.0 --port 8000
 
 # Open http://localhost:8000
 ```
