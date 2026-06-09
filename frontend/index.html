@@ -3,942 +3,934 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXIS - Adaptive eXtended Intelligence System</title>
+    <title>AXIS - Live Spatial Intelligence MVP</title>
     <style>
+        :root {
+            --bg: #0b1020;
+            --panel: #121933;
+            --panel-soft: #182242;
+            --line: #26345f;
+            --text: #e9efff;
+            --muted: #96a7d3;
+            --accent: #5bd2ff;
+            --accent-2: #7c82ff;
+            --good: #46d18c;
+            --warn: #f6c453;
+            --bad: #ff6c7a;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a25;
-            --text-primary: #e0e0e8;
-            --text-secondary: #8888a0;
-            --accent: #00d4ff;
-            --accent-secondary: #7b61ff;
-            --success: #00ff88;
-            --warning: #ffaa00;
-            --error: #ff4466;
-        }
-
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #08101f 0%, #0d1530 100%);
+            color: var(--text);
+        }
+
+        button,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        .shell {
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .app-container {
             display: grid;
-            grid-template-columns: 280px 1fr 320px;
-            grid-template-rows: 60px 1fr 200px;
-            height: 100vh;
-            gap: 1px;
-            background: var(--bg-secondary);
+            grid-template-rows: auto 1fr;
         }
 
-        /* Header */
-        .header {
-            grid-column: 1 / -1;
-            background: var(--bg-secondary);
+        .topbar {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(8, 13, 28, 0.94);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(14px);
+        }
+
+        .title-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 20px;
-            border-bottom: 1px solid var(--bg-tertiary);
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
-        .logo {
+        .title h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .title p {
+            margin: 4px 0 0;
+            color: var(--muted);
+        }
+
+        .status-row {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 600;
-            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .status-bar {
-            display: flex;
-            gap: 24px;
-            align-items: center;
-        }
-
-        .status-item {
-            display: flex;
+        .pill {
+            display: inline-flex;
             align-items: center;
             gap: 8px;
+            padding: 10px 12px;
+            border-radius: 999px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--muted);
             font-size: 13px;
-            color: var(--text-secondary);
         }
 
-        .status-dot {
-            width: 8px;
-            height: 8px;
+        .dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: var(--success);
+            background: var(--warn);
+            box-shadow: 0 0 16px rgba(246, 196, 83, 0.5);
         }
 
-        .status-dot.warning { background: var(--warning); }
-        .status-dot.error { background: var(--error); }
-
-        /* Sidebar */
-        .sidebar {
-            background: var(--bg-secondary);
-            padding: 16px;
-            overflow-y: auto;
+        .dot.good {
+            background: var(--good);
+            box-shadow: 0 0 16px rgba(70, 209, 140, 0.45);
         }
 
-        .sidebar-section {
-            margin-bottom: 24px;
+        .dot.bad {
+            background: var(--bad);
+            box-shadow: 0 0 16px rgba(255, 108, 122, 0.45);
         }
 
-        .section-title {
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
+        .content {
+            display: grid;
+            grid-template-columns: 420px minmax(380px, 1fr) 360px;
+            gap: 18px;
+            padding: 18px;
         }
 
-        /* Search Panel */
-        .search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
+        .panel {
+            background: rgba(18, 25, 51, 0.92);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
         }
 
-        .search-input {
-            flex: 1;
-            background: var(--bg-tertiary);
-            border: 1px solid transparent;
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: var(--text-primary);
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--accent);
-        }
-
-        .search-btn {
-            background: var(--accent);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            color: var(--bg-primary);
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-
-        .search-btn:hover {
-            opacity: 0.9;
-        }
-
-        /* Object List */
-        .object-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .object-item {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 12px;
+        .panel-head {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--line);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .object-item:hover {
-            background: #252535;
+        .panel-head h2,
+        .panel-head h3 {
+            margin: 0;
+            font-size: 15px;
         }
 
-        .object-item.selected {
-            border: 1px solid var(--accent);
-        }
-
-        .object-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--bg-secondary);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .object-info {
-            flex: 1;
-        }
-
-        .object-name {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .object-position {
+        .panel-head span {
+            color: var(--muted);
             font-size: 12px;
-            color: var(--text-secondary);
         }
 
-        /* Main Viewport */
-        .viewport {
-            background: var(--bg-primary);
+        .panel-body {
+            padding: 16px 18px 18px;
+        }
+
+        .camera-stack {
+            display: grid;
+            gap: 16px;
+        }
+
+        .video-shell {
             position: relative;
+            background: #070b16;
+            border-radius: 16px;
             overflow: hidden;
+            aspect-ratio: 4 / 3;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
 
-        #canvas-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        .viewport-overlay {
+        video,
+        canvas {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .overlay-btn {
-            background: rgba(18, 18, 26, 0.9);
-            border: 1px solid var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 10px 16px;
-            color: var(--text-primary);
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-
-        .overlay-btn:hover {
-            background: var(--bg-tertiary);
-        }
-
-        /* Camera Feed */
-        .camera-feed {
-            position: absolute;
-            bottom: 16px;
-            left: 16px;
-            width: 240px;
-            height: 180px;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid var(--bg-tertiary);
-        }
-
-        .camera-feed video {
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .camera-label {
+        .video-overlay {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-
-        /* Right Panel */
-        .right-panel {
-            background: var(--bg-secondary);
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        /* LLM Query */
-        .query-section {
-            margin-bottom: 24px;
-        }
-
-        .query-input {
-            width: 100%;
-            background: var(--bg-tertiary);
-            border: 1px solid transparent;
-            border-radius: 8px;
-            padding: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-family: inherit;
-            resize: none;
-            outline: none;
-            min-height: 80px;
-            transition: border-color 0.2s;
-        }
-
-        .query-input:focus {
-            border-color: var(--accent);
-        }
-
-        .query-submit {
-            margin-top: 8px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
-            border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .query-submit:hover {
-            opacity: 0.9;
-        }
-
-        /* Response Area */
-        .response-area {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 16px;
-            margin-top: 16px;
-            min-height: 100px;
-        }
-
-        .response-text {
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* Stats Section */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .stat-card {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-
-        /* Bottom Panel */
-        .bottom-panel {
-            grid-column: 1 / -1;
-            background: var(--bg-secondary);
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            padding: 16px;
-            gap: 16px;
-        }
-
-        .panel-section {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 12px;
-        }
-
-        .panel-title {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-        }
-
-        /* Trajectory View */
-        .trajectory-chart {
-            height: 100%;
-            display: flex;
-            align-items: flex-end;
-            gap: 2px;
-        }
-
-        .trajectory-bar {
-            flex: 1;
-            background: var(--accent);
-            opacity: 0.6;
-            border-radius: 2px 2px 0 0;
-            transition: opacity 0.2s;
-        }
-
-        .trajectory-bar:hover {
-            opacity: 1;
-        }
-
-        /* Event List */
-        .event-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            overflow-y: auto;
-            max-height: 140px;
-        }
-
-        .event-item {
-            font-size: 12px;
-            padding: 6px 8px;
-            background: var(--bg-secondary);
-            border-radius: 4px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
             display: flex;
             justify-content: space-between;
+            gap: 10px;
+            pointer-events: none;
         }
 
-        .event-time {
-            color: var(--text-secondary);
+        .overlay-chip {
+            background: rgba(7, 11, 22, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 10px;
+            font-size: 12px;
         }
 
-        /* Loading State */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-secondary);
+        .control-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
         }
 
-        .spinner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--bg-tertiary);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 12px;
+        button {
+            border: 0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.15s ease;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        button:hover {
+            transform: translateY(-1px);
+            opacity: 0.96;
         }
 
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .app-container {
+        .primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #061224;
+            font-weight: 700;
+        }
+
+        .secondary {
+            background: var(--panel-soft);
+            border: 1px solid var(--line);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .stat {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .viewer {
+            min-height: 430px;
+            position: relative;
+        }
+
+        #three-root {
+            height: 430px;
+        }
+
+        .search-box,
+        .ask-box {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+        }
+
+        .ask-box {
+            grid-template-columns: 1fr;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            border-radius: 12px;
+            padding: 12px 14px;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 84px;
+            resize: vertical;
+        }
+
+        .list {
+            display: grid;
+            gap: 10px;
+            max-height: 250px;
+            overflow: auto;
+        }
+
+        .item {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 12px;
+            cursor: pointer;
+        }
+
+        .item:hover,
+        .item.active {
+            border-color: rgba(91, 210, 255, 0.55);
+            background: rgba(91, 210, 255, 0.08);
+        }
+
+        .item strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .response-box {
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 14px;
+            padding: 14px;
+            min-height: 100px;
+            line-height: 1.55;
+            color: var(--text);
+        }
+
+        .graph-list,
+        .event-list {
+            display: grid;
+            gap: 8px;
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .graph-edge,
+        .event {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+        }
+
+        .footer-note {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        @media (max-width: 1220px) {
+            .content {
                 grid-template-columns: 1fr;
-                grid-template-rows: 60px 1fr 200px;
-            }
-            .sidebar, .right-panel {
-                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo">
-                <div class="logo-icon">AX</div>
-                <span class="logo-text">AXIS</span>
-            </div>
-            <div class="status-bar">
-                <div class="status-item">
-                    <div class="status-dot" id="camera-status"></div>
-                    <span>Camera</span>
+    <div class="shell">
+        <header class="topbar">
+            <div class="title-row">
+                <div class="title">
+                    <h1>AXIS Live Spatial Intelligence MVP</h1>
+                    <p>Browser camera + live object recognition + searchable scene graph + 3D scene viewer.</p>
                 </div>
-                <div class="status-item">
-                    <div class="status-dot" id="slam-status"></div>
-                    <span>SLAM</span>
-                </div>
-                <div class="status-item">
-                    <div class="status-dot" id="llm-status"></div>
-                    <span>LLM</span>
+                <div class="status-row">
+                    <div class="pill"><span class="dot" id="camera-dot"></span><span id="camera-status">Camera idle</span></div>
+                    <div class="pill"><span class="dot" id="detector-dot"></span><span id="detector-status">Detector loading</span></div>
+                    <div class="pill"><span class="dot" id="backend-dot"></span><span id="backend-status">Backend connecting</span></div>
                 </div>
             </div>
         </header>
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-section">
-                <div class="section-title">Semantic Search</div>
-                <div class="search-box">
-                    <input type="text" class="search-input" id="search-input" placeholder="Find object...">
-                    <button class="search-btn" onclick="searchObjects()">Search</button>
+        <main class="content">
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h2>Webcam Ingestion</h2>
+                        <span>Live browser camera feed with on-device recognition</span>
+                    </div>
+                    <span id="fps-label">0 detections/sec</span>
                 </div>
-            </div>
+                <div class="panel-body camera-stack">
+                    <div class="video-shell">
+                        <video id="webcam" autoplay playsinline muted></video>
+                        <canvas id="overlay"></canvas>
+                        <div class="video-overlay">
+                            <div class="overlay-chip" id="model-chip">Model: loading</div>
+                            <div class="overlay-chip" id="object-chip">Objects: 0</div>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <button class="primary" id="start-camera">Start Camera</button>
+                        <button class="secondary" id="reset-scene">Reset Scene</button>
+                        <button class="secondary" id="pause-detection">Pause Detection</button>
+                        <button class="secondary" id="refresh-state">Refresh State</button>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat"><strong id="stat-objects">0</strong><span>Semantic Objects</span></div>
+                        <div class="stat"><strong id="stat-points">0</strong><span>Map Points</span></div>
+                        <div class="stat"><strong id="stat-keyframes">0</strong><span>Keyframes</span></div>
+                        <div class="stat"><strong id="stat-edges">0</strong><span>Scene Relations</span></div>
+                    </div>
+                    <p class="footer-note">Phase 1 target: webcam ingestion, semantic object understanding, searchable 3D scene, and natural-language scene answers. Later phases in <code>main.md</code> still need heavier models and infrastructure.</p>
+                </div>
+            </section>
 
-            <div class="sidebar-section">
-                <div class="section-title">Detected Objects</div>
-                <div class="object-list" id="object-list">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <span>Loading objects...</span>
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h2>3D Scene Viewer</h2>
+                        <span>Pseudo-3D world model from the live detection stream</span>
+                    </div>
+                    <span id="scene-summary">No scene yet</span>
+                </div>
+                <div class="panel-body">
+                    <div class="viewer" id="three-root"></div>
+                    <div style="height: 16px"></div>
+                    <div class="search-box">
+                        <input id="search-input" placeholder="Search the scene: bottle, person, laptop, chair...">
+                        <button class="primary" id="search-button">Search</button>
+                    </div>
+                    <div style="height: 12px"></div>
+                    <div class="list" id="search-results">
+                        <div class="item muted">Search results will appear here.</div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="sidebar-section">
-                <div class="section-title">Scene Graph</div>
-                <div id="scene-graph" style="font-size: 12px; color: var(--text-secondary);">
-                    No relationships detected
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h2>Scene Intelligence</h2>
+                        <span>Tracked objects, relationships, events, and natural language</span>
+                    </div>
+                    <span id="ws-status">Realtime sync starting</span>
                 </div>
-            </div>
-        </aside>
-
-        <!-- Main Viewport -->
-        <main class="viewport">
-            <div id="canvas-container"></div>
-            <div class="viewport-overlay">
-                <button class="overlay-btn" onclick="toggleCamera()">
-                    <span>📷</span> Toggle Camera
-                </button>
-                <button class="overlay-btn" onclick="resetView()">
-                    <span>🔄</span> Reset View
-                </button>
-                <button class="overlay-btn" onclick="toggleLabels()">
-                    <span>🏷️</span> Toggle Labels
-                </button>
-            </div>
-            <div class="camera-feed">
-                <video id="video-feed" autoplay muted></video>
-                <div class="camera-label">Live Feed</div>
-            </div>
+                <div class="panel-body">
+                    <h3 style="margin: 0 0 10px">Tracked Objects</h3>
+                    <div class="list" id="object-list">
+                        <div class="item muted">Start the camera to populate the live object map.</div>
+                    </div>
+                    <div style="height: 16px"></div>
+                    <h3 style="margin: 0 0 10px">Ask AXIS</h3>
+                    <div class="ask-box">
+                        <textarea id="question-input" placeholder="Ask things like: Where is the bottle? How many persons do you see? Describe the scene."></textarea>
+                        <button class="primary" id="ask-button">Ask</button>
+                    </div>
+                    <div style="height: 10px"></div>
+                    <div class="response-box" id="response-box">AXIS will answer from the live scene state.</div>
+                    <div style="height: 16px"></div>
+                    <h3 style="margin: 0 0 10px">Scene Graph</h3>
+                    <div class="graph-list" id="graph-list">
+                        <div class="graph-edge muted">Relationships appear once multiple objects are detected.</div>
+                    </div>
+                    <div style="height: 16px"></div>
+                    <h3 style="margin: 0 0 10px">Recent Events</h3>
+                    <div class="event-list" id="event-list">
+                        <div class="event muted">Waiting for camera activity.</div>
+                    </div>
+                </div>
+            </section>
         </main>
-
-        <!-- Right Panel -->
-        <aside class="right-panel">
-            <div class="query-section">
-                <div class="section-title">Ask AXIS</div>
-                <textarea class="query-input" id="query-input" placeholder="Ask about the scene..."></textarea>
-                <button class="query-submit" onclick="submitQuery()">Ask</button>
-                <div class="response-area">
-                    <div class="response-text" id="response-text">
-                        Ask a question about the scene to get started...
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="section-title">Statistics</div>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="map-points">0</div>
-                        <div class="stat-label">Map Points</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="objects-count">0</div>
-                        <div class="stat-label">Objects</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="keyframes-count">0</div>
-                        <div class="stat-label">Keyframes</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="fps-display">0</div>
-                        <div class="stat-label">FPS</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="section-title">Human Tracking</div>
-                <div id="human-list" style="font-size: 13px; color: var(--text-secondary);">
-                    No humans detected
-                </div>
-            </div>
-        </aside>
-
-        <!-- Bottom Panel -->
-        <footer class="bottom-panel">
-            <div class="panel-section">
-                <div class="panel-title">Camera Trajectory</div>
-                <div class="trajectory-chart" id="trajectory-chart"></div>
-            </div>
-            <div class="panel-section">
-                <div class="panel-title">Prediction</div>
-                <div id="prediction-view" style="font-size: 12px;">
-                    No predictions yet
-                </div>
-            </div>
-            <div class="panel-section">
-                <div class="panel-title">Physics</div>
-                <div id="physics-view" style="font-size: 12px;">
-                    Click object to simulate
-                </div>
-            </div>
-            <div class="panel-section">
-                <div class="panel-title">Recent Events</div>
-                <div class="event-list" id="event-list">
-                    <div class="event-item">
-                        <span>System initialized</span>
-                        <span class="event-time">Now</span>
-                    </div>
-                </div>
-            </div>
-            <div class="panel-section">
-                <div class="panel-title">System Health</div>
-                <div id="system-health" style="font-size: 12px;">
-                    <div>CPU: <span id="cpu-usage">0%</span></div>
-                    <div>Memory: <span id="mem-usage">0%</span></div>
-                    <div>GPU: <span id="gpu-usage">N/A</span></div>
-                </div>
-            </div>
-        </footer>
     </div>
 
-    <!-- Three.js and Application Script -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
     <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
         }
-    }
     </script>
 
     <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import * as THREE from "three";
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-        // AXIS Application
-        class AXISApp {
-            constructor() {
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.controls = null;
-                this.pointCloud = null;
-                this.labels = [];
-                this.showLabels = true;
-                this.ws = null;
-                this.fps = 0;
-                this.frameCount = 0;
-                this.lastFpsUpdate = Date.now();
+        const video = document.getElementById("webcam");
+        const overlay = document.getElementById("overlay");
+        const overlayCtx = overlay.getContext("2d");
+        const objectList = document.getElementById("object-list");
+        const graphList = document.getElementById("graph-list");
+        const eventList = document.getElementById("event-list");
+        const searchResults = document.getElementById("search-results");
+        const responseBox = document.getElementById("response-box");
+        const sceneSummary = document.getElementById("scene-summary");
 
-                this.init();
-                this.connectWebSocket();
-                this.animate();
-            }
+        let detector = null;
+        let stream = null;
+        let detectionLoop = null;
+        let pollLoop = null;
+        let websocket = null;
+        let detectionPaused = false;
+        let frameId = 0;
+        let detectionSamples = 0;
+        let lastFpsTick = performance.now();
+        let selectedObjectId = null;
+        let latestState = null;
 
-            init() {
-                const container = document.getElementById('canvas-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
+        const objectMeshes = new Map();
+        const trajectoryMarkers = [];
 
-                // Scene
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x0a0a0f);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(document.getElementById("three-root").clientWidth, 430);
+        document.getElementById("three-root").appendChild(renderer.domElement);
 
-                // Camera
-                this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-                this.camera.position.set(0, 2, 5);
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x08101f);
 
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({ antialias: true });
-                this.renderer.setSize(width, height);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
-                container.appendChild(this.renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(58, document.getElementById("three-root").clientWidth / 430, 0.1, 100);
+        camera.position.set(0, 2.8, 8);
 
-                // Controls
-                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
 
-                // Lights
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-                this.scene.add(ambientLight);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
+        keyLight.position.set(5, 8, 6);
+        scene.add(keyLight);
+        scene.add(new THREE.GridHelper(12, 12, 0x1f4372, 0x142442));
+        scene.add(new THREE.AxesHelper(1.5));
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-                directionalLight.position.set(5, 10, 5);
-                this.scene.add(directionalLight);
-
-                // Grid
-                const gridHelper = new THREE.GridHelper(20, 20, 0x303040, 0x202030);
-                this.scene.add(gridHelper);
-
-                // Axes
-                const axesHelper = new THREE.AxesHelper(2);
-                this.scene.add(axesHelper);
-
-                // Point cloud placeholder
-                this.initPointCloud();
-
-                // Resize handler
-                window.addEventListener('resize', () => this.onResize());
-            }
-
-            initPointCloud() {
-                // Create placeholder point cloud
-                const geometry = new THREE.BufferGeometry();
-                const points = new Float32Array(1000 * 3);
-                
-                for (let i = 0; i < points.length; i++) {
-                    points[i] = (Math.random() - 0.5) * 10;
+        const api = {
+            async get(path) {
+                const response = await fetch(path);
+                if (!response.ok) {
+                    throw new Error(`GET ${path} failed`);
                 }
-
-                geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
-
-                const material = new THREE.PointsMaterial({
-                    color: 0x00d4ff,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 0.8
+                return response.json();
+            },
+            async post(path, payload = {}) {
+                const response = await fetch(path, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
                 });
-
-                this.pointCloud = new THREE.Points(geometry, material);
-                this.scene.add(this.pointCloud);
-            }
-
-            updatePointCloud(positions, colors) {
-                if (!this.pointCloud) return;
-
-                const geometry = new THREE.BufferGeometry();
-                const points = new Float32Array(positions.length * 3);
-                
-                for (let i = 0; i < positions.length; i++) {
-                    points[i * 3] = positions[i].x || positions[i][0];
-                    points[i * 3 + 1] = positions[i].y || positions[i][1];
-                    points[i * 3 + 2] = positions[i].z || positions[i][2];
+                if (!response.ok) {
+                    throw new Error(`POST ${path} failed`);
                 }
+                return response.json();
+            },
+        };
 
-                geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+        function setStatus(id, text, level) {
+            document.getElementById(`${id}-status`).textContent = text;
+            const dot = document.getElementById(`${id}-dot`);
+            dot.classList.remove("good", "bad");
+            if (level === "good") dot.classList.add("good");
+            if (level === "bad") dot.classList.add("bad");
+        }
 
-                this.scene.remove(this.pointCloud);
-                
-                const material = new THREE.PointsMaterial({
-                    color: 0x00d4ff,
-                    size: 0.05,
-                    transparent: true,
-                    opacity: 0.8
-                });
+        function drawDetections(predictions) {
+            overlay.width = video.videoWidth || 640;
+            overlay.height = video.videoHeight || 480;
+            overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+            overlayCtx.lineWidth = 2;
+            overlayCtx.font = "14px Inter, sans-serif";
 
-                this.pointCloud = new THREE.Points(geometry, material);
-                this.scene.add(this.pointCloud);
+            predictions.forEach((prediction) => {
+                const [x, y, width, height] = prediction.bbox;
+                overlayCtx.strokeStyle = "#5bd2ff";
+                overlayCtx.fillStyle = "rgba(91, 210, 255, 0.16)";
+                overlayCtx.fillRect(x, y, width, height);
+                overlayCtx.strokeRect(x, y, width, height);
+                const label = `${prediction.class} ${Math.round(prediction.score * 100)}%`;
+                overlayCtx.fillStyle = "#08101f";
+                overlayCtx.fillRect(x, Math.max(0, y - 24), Math.max(120, label.length * 8), 20);
+                overlayCtx.fillStyle = "#e9efff";
+                overlayCtx.fillText(label, x + 6, Math.max(14, y - 9));
+            });
+        }
+
+        function renderObjects(objects) {
+            if (!objects.length) {
+                objectList.innerHTML = '<div class="item muted">No recognized objects yet.</div>';
+                return;
             }
 
-            addObjectLabel(position, text, color = 0x00d4ff) {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                ctx.font = '24px Arial';
-                ctx.fillStyle = '#00d4ff';
-                ctx.fillText(text, 0, 24);
-
-                const texture = new THREE.CanvasTexture(canvas);
-                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-                const sprite = new THREE.Sprite(spriteMaterial);
-                
-                sprite.position.copy(position);
-                sprite.scale.set(1, 0.5, 1);
-
-                this.scene.add(sprite);
-                this.labels.push(sprite);
-            }
-
-            connectWebSocket() {
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const wsUrl = `${protocol}//${window.location.host}/ws/scene`;
-
-                try {
-                    this.ws = new WebSocket(wsUrl);
-                    
-                    this.ws.onopen = () => {
-                        console.log('WebSocket connected');
-                        this.updateStatus('camera', 'connected');
-                        this.ws.send(JSON.stringify({ command: 'get_state' }));
-                    };
-
-                    this.ws.onmessage = (event) => {
-                        const data = JSON.parse(event.data);
-                        this.handleMessage(data);
-                    };
-
-                    this.ws.onerror = (error) => {
-                        console.log('WebSocket error (server may not be running)');
-                        this.updateStatus('camera', 'error');
-                    };
-
-                    this.ws.onclose = () => {
-                        console.log('WebSocket closed');
-                        setTimeout(() => this.connectWebSocket(), 5000);
-                    };
-                } catch (e) {
-                    console.log('WebSocket not available');
-                }
-            }
-
-            handleMessage(data) {
-                if (data.type === 'state') {
-                    this.updateState(data);
-                } else if (data.type === 'search_results') {
-                    this.displaySearchResults(data.results);
-                } else if (data.type === 'llm_response') {
-                    this.displayResponse(data.response);
-                }
-            }
-
-            updateState(state) {
-                document.getElementById('map-points').textContent = state.map_points || 0;
-                document.getElementById('objects-count').textContent = state.semantic_objects || 0;
-                document.getElementById('keyframes-count').textContent = state.keyframes || 0;
-                
-                this.updateStatus('slam', state.slam_state === 'tracking' ? 'connected' : 'warning');
-            }
-
-            displaySearchResults(results) {
-                const list = document.getElementById('object-list');
-                if (results.length === 0) {
-                    list.innerHTML = '<div style="color: var(--text-secondary);">No results found</div>';
-                    return;
-                }
-
-                list.innerHTML = results.map(r => `
-                    <div class="object-item" onclick="selectObject('${r.object_id}')">
-                        <div class="object-icon">📦</div>
-                        <div class="object-info">
-                            <div class="object-name">${r.class_name}</div>
-                            <div class="object-position">${r.position.x.toFixed(1)}, ${r.position.y.toFixed(1)}, ${r.position.z.toFixed(1)}</div>
+            objectList.innerHTML = objects
+                .sort((a, b) => b.confidence - a.confidence)
+                .map((obj) => {
+                    const active = selectedObjectId === obj.object_id ? "active" : "";
+                    return `
+                        <div class="item ${active}" data-object-id="${obj.object_id}">
+                            <strong>${obj.class_name}</strong>
+                            <div class="muted">confidence ${Math.round(obj.confidence * 100)}%, observations ${obj.observation_count}</div>
+                            <div class="muted">x ${obj.position.x.toFixed(2)} | y ${obj.position.y.toFixed(2)} | z ${obj.position.z.toFixed(2)}</div>
                         </div>
-                        <div style="font-size: 12px; color: var(--accent);">${Math.round(r.similarity * 100)}%</div>
+                    `;
+                })
+                .join("");
+
+            objectList.querySelectorAll("[data-object-id]").forEach((element) => {
+                element.addEventListener("click", () => {
+                    selectedObjectId = element.dataset.objectId;
+                    renderObjects(objects);
+                    highlightSelectedObject();
+                });
+            });
+        }
+
+        function renderSearchResults(results) {
+            if (!results.length) {
+                searchResults.innerHTML = '<div class="item muted">No search results yet.</div>';
+                return;
+            }
+
+            searchResults.innerHTML = results
+                .map((result) => `
+                    <div class="item" data-search-object-id="${result.object_id}">
+                        <strong>${result.class_name}</strong>
+                        <div class="muted">similarity ${Math.round(result.similarity * 100)}%, confidence ${Math.round(result.confidence * 100)}%</div>
+                        <div class="muted">x ${result.position.x.toFixed(2)} | y ${result.position.y.toFixed(2)} | z ${result.position.z.toFixed(2)}</div>
                     </div>
-                `).join('');
+                `)
+                .join("");
+
+            searchResults.querySelectorAll("[data-search-object-id]").forEach((element) => {
+                element.addEventListener("click", () => {
+                    selectedObjectId = element.dataset.searchObjectId;
+                    highlightSelectedObject();
+                    if (latestState) {
+                        renderObjects(latestState.objects || []);
+                    }
+                });
+            });
+        }
+
+        function renderGraph(graph) {
+            const edges = graph?.edges || [];
+            if (!edges.length) {
+                graphList.innerHTML = '<div class="graph-edge muted">Relationships appear once multiple objects are detected.</div>';
+                return;
             }
 
-            displayResponse(response) {
-                document.getElementById('response-text').textContent = response || 'No response';
+            graphList.innerHTML = edges
+                .slice(0, 14)
+                .map((edge) => `<div class="graph-edge">${edge.source} <strong>${edge.relation}</strong> ${edge.target}</div>`)
+                .join("");
+        }
+
+        function renderEvents(events) {
+            if (!events.length) {
+                eventList.innerHTML = '<div class="event muted">Waiting for camera activity.</div>';
+                return;
             }
+            eventList.innerHTML = events
+                .map((event) => {
+                    const when = new Date(event.timestamp * 1000).toLocaleTimeString();
+                    return `<div class="event"><strong>${event.type}</strong> - ${event.description}<div class="muted">${when}</div></div>`;
+                })
+                .join("");
+        }
 
-            updateStatus(element, status) {
-                const el = document.getElementById(`${element}-status`);
-                el.className = 'status-dot';
-                if (status === 'error') el.classList.add('error');
-                else if (status === 'warning') el.classList.add('warning');
-            }
+        function updateStats(state) {
+            document.getElementById("stat-objects").textContent = state.semantic_objects || 0;
+            document.getElementById("stat-points").textContent = state.map_points || 0;
+            document.getElementById("stat-keyframes").textContent = state.keyframes || 0;
+            document.getElementById("stat-edges").textContent = (state.scene_graph?.edges || []).length;
+            document.getElementById("object-chip").textContent = `Objects: ${state.semantic_objects || 0}`;
+            sceneSummary.textContent = state.semantic_objects ? `${state.semantic_objects} objects in the scene map` : "No scene yet";
+        }
 
-            onResize() {
-                const container = document.getElementById('canvas-container');
-                const width = container.clientWidth;
-                const height = container.clientHeight;
+        function highlightSelectedObject() {
+            objectMeshes.forEach((mesh, objectId) => {
+                mesh.material.emissive.setHex(objectId === selectedObjectId ? 0x5bd2ff : 0x000000);
+                mesh.material.emissiveIntensity = objectId === selectedObjectId ? 0.7 : 0.0;
+            });
+        }
 
-                this.camera.aspect = width / height;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(width, height);
-            }
+        function updateThreeScene(state) {
+            latestState = state;
+            const objects = state.objects || [];
+            const seen = new Set();
 
-            animate() {
-                requestAnimationFrame(() => this.animate());
-
-                this.controls.update();
-                this.renderer.render(this.scene, this.camera);
-
-                // FPS counter
-                this.frameCount++;
-                const now = Date.now();
-                if (now - this.lastFpsUpdate >= 1000) {
-                    this.fps = this.frameCount;
-                    this.frameCount = 0;
-                    this.lastFpsUpdate = now;
-                    document.getElementById('fps-display').textContent = this.fps;
+            objects.forEach((obj) => {
+                seen.add(obj.object_id);
+                let mesh = objectMeshes.get(obj.object_id);
+                if (!mesh) {
+                    const geometry = new THREE.BoxGeometry(obj.size.x, obj.size.y, obj.size.z);
+                    const material = new THREE.MeshStandardMaterial({
+                        color: new THREE.Color().setHSL(((objectMeshes.size * 0.17) % 1), 0.72, 0.55),
+                        roughness: 0.35,
+                        metalness: 0.08,
+                    });
+                    mesh = new THREE.Mesh(geometry, material);
+                    mesh.userData.objectId = obj.object_id;
+                    scene.add(mesh);
+                    objectMeshes.set(obj.object_id, mesh);
                 }
+                mesh.position.set(obj.position.x, obj.position.y, obj.position.z * -1 + 2.5);
+                mesh.scale.set(1, 1, 1);
+            });
+
+            objectMeshes.forEach((mesh, objectId) => {
+                if (!seen.has(objectId)) {
+                    scene.remove(mesh);
+                    mesh.geometry.dispose();
+                    mesh.material.dispose();
+                    objectMeshes.delete(objectId);
+                }
+            });
+
+            trajectoryMarkers.forEach((marker) => scene.remove(marker));
+            trajectoryMarkers.length = 0;
+            (state.trajectory || []).slice(-25).forEach((point) => {
+                const marker = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.03, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: 0x7c82ff })
+                );
+                marker.position.set(point.x, point.y - 1.2, point.z * -1 + 2.5);
+                trajectoryMarkers.push(marker);
+                scene.add(marker);
+            });
+
+            highlightSelectedObject();
+        }
+
+        function applyState(state) {
+            setStatus("backend", "Backend connected", "good");
+            document.getElementById("ws-status").textContent = "Realtime sync active";
+            latestState = state;
+            updateStats(state);
+            renderObjects(state.objects || []);
+            renderGraph(state.scene_graph || {});
+            renderEvents(state.recent_events || []);
+            updateThreeScene(state);
+        }
+
+        async function loadDetector() {
+            try {
+                detector = await cocoSsd.load();
+                setStatus("detector", "Detector ready", "good");
+                document.getElementById("model-chip").textContent = "Model: coco-ssd";
+            } catch (error) {
+                console.error(error);
+                setStatus("detector", "Detector failed", "bad");
+                document.getElementById("model-chip").textContent = "Model: failed to load";
+                responseBox.textContent = "The browser detector failed to load. Check your internet connection because the TensorFlow.js model is loaded from a CDN.";
             }
         }
 
-        // Global functions
-        let app;
+        async function startCamera() {
+            if (stream) {
+                return;
+            }
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: "environment" },
+                    audio: false,
+                });
+                video.srcObject = stream;
+                await video.play();
+                await api.post("/camera/start");
+                setStatus("camera", "Camera live", "good");
+                startDetectionLoop();
+            } catch (error) {
+                console.error(error);
+                setStatus("camera", "Camera blocked", "bad");
+                responseBox.textContent = "Camera access was blocked. Allow camera permissions in your browser and try again.";
+            }
+        }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            app = new AXISApp();
-            initCamera();
+        async function stopCamera() {
+            if (!stream) {
+                return;
+            }
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+            video.srcObject = null;
+            clearInterval(detectionLoop);
+            detectionLoop = null;
+            await api.post("/camera/stop");
+            setStatus("camera", "Camera idle", "bad");
+        }
+
+        async function runDetection() {
+            if (!detector || !stream || detectionPaused || video.readyState < 2) {
+                return;
+            }
+            const predictions = await detector.detect(video, 8);
+            const filtered = predictions.filter((item) => item.score >= 0.55);
+            drawDetections(filtered);
+            detectionSamples += 1;
+
+            const now = performance.now();
+            if (now - lastFpsTick > 1000) {
+                document.getElementById("fps-label").textContent = `${detectionSamples} detections/sec`;
+                detectionSamples = 0;
+                lastFpsTick = now;
+            }
+
+            const payload = {
+                frame_id: ++frameId,
+                camera_active: true,
+                detections: filtered.map((item) => ({
+                    label: item.class,
+                    score: item.score,
+                    bbox: {
+                        x: item.bbox[0],
+                        y: item.bbox[1],
+                        width: item.bbox[2],
+                        height: item.bbox[3],
+                    },
+                })),
+            };
+
+            const state = await api.post("/scene/update", payload);
+            applyState(state);
+        }
+
+        function startDetectionLoop() {
+            clearInterval(detectionLoop);
+            detectionLoop = setInterval(() => {
+                runDetection().catch((error) => {
+                    console.error(error);
+                    setStatus("backend", "Backend update failed", "bad");
+                });
+            }, 900);
+        }
+
+        async function refreshState() {
+            try {
+                const state = await api.get("/state");
+                applyState(state);
+            } catch (error) {
+                console.error(error);
+                setStatus("backend", "Backend unavailable", "bad");
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            websocket = new WebSocket(`${protocol}://${window.location.host}/ws/scene`);
+
+            websocket.onopen = () => {
+                document.getElementById("ws-status").textContent = "Realtime sync active";
+            };
+
+            websocket.onmessage = (event) => {
+                const payload = JSON.parse(event.data);
+                if (payload.type === "state") {
+                    applyState(payload);
+                } else if (payload.type === "search_results") {
+                    renderSearchResults(payload.results || []);
+                } else if (payload.type === "llm_response") {
+                    responseBox.textContent = payload.response || "No response";
+                }
+            };
+
+            websocket.onerror = () => {
+                document.getElementById("ws-status").textContent = "Realtime sync retrying";
+            };
+
+            websocket.onclose = () => {
+                document.getElementById("ws-status").textContent = "Realtime sync reconnecting";
+                setTimeout(connectWebSocket, 1800);
+            };
+        }
+
+        async function searchScene() {
+            const query = document.getElementById("search-input").value.trim();
+            if (!query) {
+                return;
+            }
+            const result = await api.post("/search", { query, top_k: 5 });
+            renderSearchResults(result.results || []);
+            if (result.results?.length) {
+                selectedObjectId = result.results[0].object_id;
+                highlightSelectedObject();
+            }
+        }
+
+        async function askAxis() {
+            const question = document.getElementById("question-input").value.trim();
+            if (!question) {
+                return;
+            }
+            responseBox.textContent = "Thinking over the current scene...";
+            const response = await api.post("/query", { question, context: true });
+            responseBox.textContent = response.response;
+        }
+
+        async function resetScene() {
+            const state = await api.post("/scene/reset");
+            searchResults.innerHTML = '<div class="item muted">Search results will appear here.</div>';
+            responseBox.textContent = "Scene has been reset. Start scanning again.";
+            selectedObjectId = null;
+            applyState(state);
+        }
+
+        function toggleDetectionPause() {
+            detectionPaused = !detectionPaused;
+            document.getElementById("pause-detection").textContent = detectionPaused ? "Resume Detection" : "Pause Detection";
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener("resize", () => {
+            const width = document.getElementById("three-root").clientWidth;
+            camera.aspect = width / 430;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, 430);
         });
 
-        async function initCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 640, height: 480 } 
-                });
-                document.getElementById('video-feed').srcObject = stream;
-                app.updateStatus('camera', 'connected');
-            } catch (e) {
-                console.log('Camera not available');
-            }
-        }
-
-        function toggleCamera() {
-            const video = document.getElementById('video-feed');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
+        document.getElementById("start-camera").addEventListener("click", async () => {
+            if (stream) {
+                await stopCamera();
+                document.getElementById("start-camera").textContent = "Start Camera";
             } else {
-                initCamera();
+                await startCamera();
+                document.getElementById("start-camera").textContent = "Stop Camera";
             }
-        }
+        });
+        document.getElementById("reset-scene").addEventListener("click", () => resetScene().catch(console.error));
+        document.getElementById("pause-detection").addEventListener("click", toggleDetectionPause);
+        document.getElementById("refresh-state").addEventListener("click", () => refreshState().catch(console.error));
+        document.getElementById("search-button").addEventListener("click", () => searchScene().catch(console.error));
+        document.getElementById("ask-button").addEventListener("click", () => askAxis().catch(console.error));
+        document.getElementById("search-input").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                searchScene().catch(console.error);
+            }
+        });
 
-        function resetView() {
-            app.camera.position.set(0, 2, 5);
-            app.controls.reset();
-        }
-
-        function toggleLabels() {
-            app.showLabels = !app.showLabels;
-            app.labels.forEach(label => label.visible = app.showLabels);
-        }
-
-        async function searchObjects() {
-            const query = document.getElementById('search-input').value;
-            if (!query || !app.ws) return;
-
-            app.ws.send(JSON.stringify({
-                command: 'search',
-                query: query
-            }));
-        }
-
-        async function submitQuery() {
-            const question = document.getElementById('query-input').value;
-            if (!question || !app.ws) return;
-
-            app.ws.send(JSON.stringify({
-                command: 'query',
-                question: question
-            }));
-        }
-
-        function selectObject(objectId) {
-            console.log('Selected:', objectId);
-            // Highlight object in 3D view
-        }
+        loadDetector();
+        connectWebSocket();
+        refreshState();
+        pollLoop = setInterval(() => refreshState().catch(() => {}), 3000);
+        animate();
     </script>
 </body>
 </html>

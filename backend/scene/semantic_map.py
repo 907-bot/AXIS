@@ -24,8 +24,8 @@ class MapObject:
     
     # Metadata
     confidence: float = 1.0
-    first_observed: float = field(default_factory=datetime.now().timestamp)
-    last_observed: float = field(default_factory=datetime.now().timestamp)
+    first_observed: float = field(default_factory=lambda: datetime.now().timestamp())
+    last_observed: float = field(default_factory=lambda: datetime.now().timestamp())
     observation_count: int = 1
     
     # Tracking

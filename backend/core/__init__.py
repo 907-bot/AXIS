@@ -1,14 +1,24 @@
-"""Core module - shared utilities and base classes."""
-from .camera import CameraCapture
-from .frame import Frame, FrameProcessor
-from .types import Point3D, Pose, Vector3, Quaternion
+"""Core module with optional runtime dependencies."""
+
+from .types import Point3D, Pose, Quaternion, Vector3
+
+try:
+    from .camera import CameraCapture
+except ImportError:  # pragma: no cover - optional local camera dependency
+    CameraCapture = None
+
+try:
+    from .frame import Frame, FrameProcessor
+except ImportError:  # pragma: no cover - optional torch dependency
+    Frame = None
+    FrameProcessor = None
 
 __all__ = [
-    "CameraCapture",
-    "Frame",
-    "FrameProcessor",
     "Point3D",
     "Pose",
     "Vector3",
-    "Quaternion"
+    "Quaternion",
+    "CameraCapture",
+    "Frame",
+    "FrameProcessor",
 ]
