@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgthread-2.0-0 \
     libjpeg62-turbo \
     libpng16-16 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -32,7 +33,9 @@ COPY requirements-docker.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY backend ./backend
+COPY config ./config
+COPY frontend ./frontend
 
 # Create necessary directories
 RUN mkdir -p logs data models .cache

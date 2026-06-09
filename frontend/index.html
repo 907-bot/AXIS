@@ -920,22 +920,24 @@
         }
 
         async function loadDetector() {
+            setStatus("detector", "Loading...", "neutral");
+            console.log("Loading COCO-SSD model...");
             try {
                 detector = await cocoSsd.load();
+                console.log("Detector loaded!");
                 setStatus("detector", "Detector ready", "good");
                 document.getElementById("model-chip").textContent = "Model: coco-ssd";
             } catch (error) {
-                console.error(error);
+                console.error("Detector error:", error);
                 setStatus("detector", "Detector failed", "bad");
-                document.getElementById("model-chip").textContent = "Model: failed to load";
-                responseBox.textContent = "The browser detector failed to load. Check your internet connection because the TensorFlow.js model is loaded from a CDN.";
+                document.getElementById("model-chip").textContent = "Model: failed";
+                responseBox.textContent = "Failed to load model. Check browser console (F12).";
             }
         }
 
         async function startCamera() {
-            if (stream) {
-                return;
-            }
+            if (stream) return;
+            console.log("Starting camera...");
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: { width: 640, height: 480, facingMode: "environment" },
@@ -944,12 +946,13 @@
                 video.srcObject = stream;
                 await video.play();
                 await api.post("/camera/start");
+                console.log("Camera active!");
                 setStatus("camera", "Camera live", "good");
                 startDetectionLoop();
             } catch (error) {
-                console.error(error);
+                console.error("Camera error:", error);
                 setStatus("camera", "Camera blocked", "bad");
-                responseBox.textContent = "Camera access was blocked. Allow camera permissions in your browser and try again.";
+                responseBox.textContent = "Camera access denied. Allow camera in browser settings.";
             }
         }
 

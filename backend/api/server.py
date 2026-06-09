@@ -516,6 +516,12 @@ axis_state = AxisSceneState()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("AXIS MVP server starting")
+    logger.info(f"Base directory: {settings.base_dir}")
+    frontend_dir = Path(settings.base_dir) / "frontend"
+    logger.info(f"Frontend directory: {frontend_dir}")
+    logger.info(f"Frontend exists: {frontend_dir.exists()}")
+    if frontend_dir.exists():
+        logger.info(f"Frontend files: {list(frontend_dir.iterdir())}")
     yield
     logger.info("AXIS MVP server shutting down")
 
