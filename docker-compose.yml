@@ -1,5 +1,4 @@
 # Docker Compose for AXIS
-version: '3.8'
 
 services:
   axis:
@@ -45,8 +44,8 @@ services:
     image: qdrant/qdrant:v1.7.0
     container_name: axis-qdrant
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "6335:6333"
+      - "6336:6334"
     volumes:
       - qdrant_data:/qdrant/storage
     restart: unless-stopped
