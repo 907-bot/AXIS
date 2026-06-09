@@ -246,10 +246,20 @@
         .viewer {
             min-height: 430px;
             position: relative;
+            background: #08101f;
+            border: 1px solid #1f4372;
         }
 
         #three-root {
             height: 430px;
+            min-height: 430px;
+            background: #08101f;
+        }
+        
+        #three-root canvas {
+            display: block !important;
+            width: 100% !important;
+            height: 430px !important;
         }
 
         .search-box,
@@ -1147,10 +1157,16 @@
                 canvas.style.display = 'block';
                 canvas.style.width = '100%';
                 canvas.style.height = '430px';
+                console.log("Three.js canvas initialized");
+            } else {
+                console.warn("No Three.js canvas found - checking for errors");
+                // Create a fallback visual
+                const container = document.getElementById("three-root");
+                container.innerHTML = '<div style="color:#5bd2ff;text-align:center;padding:50px;font-family:monospace">Loading 3D scene...</div>';
             }
             // Force resize to recalculate
             window.dispatchEvent(new Event('resize'));
-        }, 100);
+        }, 500);
 
         document.getElementById("start-camera").addEventListener("click", async () => {
             if (stream) {
