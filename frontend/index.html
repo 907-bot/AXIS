@@ -506,9 +506,13 @@
         let floorMesh = null;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(document.getElementById("three-root").clientWidth, 430);
-        document.getElementById("three-root").appendChild(renderer.domElement);
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+        const container = document.getElementById("three-root");
+        const width = Math.max(container.clientWidth || 800, 400);
+        const height = 430;
+        renderer.setSize(width, height);
+        container.appendChild(renderer.domElement);
+        renderer.domElement.style.display = 'block';
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x08101f);
@@ -1117,16 +1121,33 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
+            if (controls) controls.update();
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
         }
 
         window.addEventListener("resize", () => {
-            const width = document.getElementById("three-root").clientWidth;
-            camera.aspect = width / 430;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, 430);
+            const container = document.getElementById("three-root");
+            if (container && renderer && camera) {
+                const width = container.clientWidth || 800;
+                camera.aspect = width / 430;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, 430);
+            }
         });
+        
+        // Ensure canvas is visible
+        setTimeout(() => {
+            const canvas = document.querySelector("#three-root canvas");
+            if (canvas) {
+                canvas.style.display = 'block';
+                canvas.style.width = '100%';
+                canvas.style.height = '430px';
+            }
+            // Force resize to recalculate
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
 
         document.getElementById("start-camera").addEventListener("click", async () => {
             if (stream) {
