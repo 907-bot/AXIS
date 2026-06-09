@@ -3,1197 +3,420 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AXIS - Live Spatial Intelligence MVP</title>
+    <title>AXIS - 3D Scene Viewer</title>
     <style>
-        :root {
-            --bg: #0b1020;
-            --panel: #121933;
-            --panel-soft: #182242;
-            --line: #26345f;
-            --text: #e9efff;
-            --muted: #96a7d3;
-            --accent: #5bd2ff;
-            --accent-2: #7c82ff;
-            --good: #46d18c;
-            --warn: #f6c453;
-            --bad: #ff6c7a;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: linear-gradient(180deg, #08101f 0%, #0d1530 100%);
-            color: var(--text);
-        }
-
-        button,
-        input,
-        textarea {
-            font: inherit;
-        }
-
-        .shell {
-            min-height: 100vh;
-            display: grid;
-            grid-template-rows: auto 1fr;
-        }
-
-        .topbar {
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--line);
-            background: rgba(8, 13, 28, 0.94);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            backdrop-filter: blur(14px);
-        }
-
-        .title-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-
-        .title h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .title p {
-            margin: 4px 0 0;
-            color: var(--muted);
-        }
-
-        .status-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 12px;
-            border-radius: 999px;
-            background: var(--panel);
-            border: 1px solid var(--line);
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--warn);
-            box-shadow: 0 0 16px rgba(246, 196, 83, 0.5);
-        }
-
-        .dot.good {
-            background: var(--good);
-            box-shadow: 0 0 16px rgba(70, 209, 140, 0.45);
-        }
-
-        .dot.bad {
-            background: var(--bad);
-            box-shadow: 0 0 16px rgba(255, 108, 122, 0.45);
-        }
-
-        .content {
-            display: grid;
-            grid-template-columns: 420px minmax(380px, 1fr) 360px;
-            gap: 18px;
-            padding: 18px;
-        }
-
-        .panel {
-            background: rgba(18, 25, 51, 0.92);
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
-        }
-
-        .panel-head {
-            padding: 16px 18px;
-            border-bottom: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .panel-head h2,
-        .panel-head h3 {
-            margin: 0;
-            font-size: 15px;
-        }
-
-        .panel-head span {
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .panel-body {
-            padding: 16px 18px 18px;
-        }
-
-        .camera-stack {
-            display: grid;
-            gap: 16px;
-        }
-
-        .video-shell {
-            position: relative;
-            background: #070b16;
-            border-radius: 16px;
-            overflow: hidden;
-            aspect-ratio: 4 / 3;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        video,
-        canvas {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .video-overlay {
-            position: absolute;
-            left: 12px;
-            right: 12px;
-            bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            pointer-events: none;
-        }
-
-        .overlay-chip {
-            background: rgba(7, 11, 22, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: var(--text);
-            border-radius: 999px;
-            padding: 8px 10px;
-            font-size: 12px;
-        }
-
-        .control-row {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        button {
-            border: 0;
-            border-radius: 12px;
-            padding: 12px 14px;
-            color: white;
-            cursor: pointer;
-            transition: transform 0.15s ease, opacity 0.15s ease;
-        }
-
-        button:hover {
-            transform: translateY(-1px);
-            opacity: 0.96;
-        }
-
-        .primary {
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: #061224;
-            font-weight: 700;
-        }
-
-        .secondary {
-            background: var(--panel-soft);
-            border: 1px solid var(--line);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .stat {
-            padding: 14px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .stat strong {
-            display: block;
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
-        .stat span {
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .viewer {
-            min-height: 430px;
-            position: relative;
-            background: #08101f;
-            border: 1px solid #1f4372;
-        }
-
-        #three-root {
-            height: 430px;
-            min-height: 430px;
-            background: #08101f;
-        }
-        
-        #three-root canvas {
-            display: block !important;
-            width: 100% !important;
-            height: 430px !important;
-        }
-
-        .search-box,
-        .ask-box {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-        }
-
-        .ask-box {
-            grid-template-columns: 1fr;
-        }
-
-        input,
-        textarea {
-            width: 100%;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text);
-            border-radius: 12px;
-            padding: 12px 14px;
-            outline: none;
-        }
-
-        textarea {
-            min-height: 84px;
-            resize: vertical;
-        }
-
-        .list {
-            display: grid;
-            gap: 10px;
-            max-height: 250px;
-            overflow: auto;
-        }
-
-        .item {
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 14px;
-            padding: 12px;
-            cursor: pointer;
-        }
-
-        .item:hover,
-        .item.active {
-            border-color: rgba(91, 210, 255, 0.55);
-            background: rgba(91, 210, 255, 0.08);
-        }
-
-        .item strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .muted {
-            color: var(--muted);
-        }
-
-        .response-box {
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 14px;
-            padding: 14px;
-            min-height: 100px;
-            line-height: 1.55;
-            color: var(--text);
-        }
-
-        .graph-list,
-        .event-list {
-            display: grid;
-            gap: 8px;
-            max-height: 220px;
-            overflow: auto;
-        }
-
-        .graph-edge,
-        .event {
-            padding: 10px 12px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 13px;
-        }
-
-        .footer-note {
-            color: var(--muted);
-            font-size: 12px;
-            line-height: 1.55;
-        }
-
-        @media (max-width: 1220px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0f1a; color: #e9efff; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a2744 0%, #0d1526 100%); padding: 20px; border-bottom: 1px solid #1f4372; }
+        .header h1 { color: #5bd2ff; font-size: 24px; }
+        .header p { color: #7c82ff; font-size: 14px; margin-top: 5px; }
+        .main-container { display: flex; gap: 20px; padding: 20px; max-width: 1600px; margin: 0 auto; }
+        .left-panel { flex: 0 0 380px; }
+        .video-container { background: #08101f; border-radius: 12px; overflow: hidden; border: 1px solid #1f4372; }
+        .video-header { padding: 12px 16px; background: #0d1526; border-bottom: 1px solid #1f4372; display: flex; justify-content: space-between; align-items: center; }
+        .video-header h3 { font-size: 14px; color: #5bd2ff; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
+        .status-dot.good { background: #4ade80; }
+        .status-dot.bad { background: #f87171; }
+        .video-wrapper { position: relative; background: #000; min-height: 240px; }
+        #webcam { width: 100%; display: block; }
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .controls { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .primary { background: linear-gradient(135deg, #5bd2ff 0%, #3a9fd4 100%); color: #0a0f1a; }
+        .primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(91,210,255,0.3); }
+        .secondary { background: #1a2744; color: #e9efff; border: 1px solid #1f4372; }
+        .secondary:hover { background: #243656; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; background: #0d1526; border-top: 1px solid #1f4372; }
+        .stat { text-align: center; padding: 12px; background: #08101f; border-radius: 8px; }
+        .stat strong { font-size: 24px; color: #5bd2ff; display: block; }
+        .stat span { font-size: 11px; color: #7c82ff; text-transform: uppercase; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .panel { background: #0d1526; border-radius: 12px; border: 1px solid #1f4372; overflow: hidden; }
+        .panel-head { padding: 16px; background: #0a1220; border-bottom: 1px solid #1f4372; display: flex; justify-content: space-between; align-items: center; }
+        .panel-head h3 { font-size: 14px; color: #5bd2ff; }
+        .panel-body { padding: 16px; }
+        #three-container { width: 100%; height: 400px; background: #08101f; position: relative; border-radius: 8px; overflow: hidden; }
+        #three-canvas { width: 100% !important; height: 100% !important; display: block !important; }
+        .loading-3d { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #5bd2ff; font-size: 16px; text-align: center; }
+        .loading-3d .spinner { width: 40px; height: 40px; border: 3px solid #1f4372; border-top-color: #5bd2ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .info-box { background: #08101f; border-radius: 8px; padding: 12px; margin-top: 16px; }
+        .info-box h4 { color: #5bd2ff; margin-bottom: 8px; font-size: 13px; }
+        .info-box ul { list-style: none; font-size: 12px; color: #7c82ff; }
+        .info-box li { padding: 4px 0; padding-left: 16px; position: relative; }
+        .info-box li::before { content: '→'; position: absolute; left: 0; color: #5bd2ff; }
+        .object-list { max-height: 200px; overflow-y: auto; }
+        .object-item { padding: 10px; background: #08101f; border-radius: 6px; margin-bottom: 8px; }
+        .object-item strong { color: #5bd2ff; }
+        .object-item .muted { font-size: 12px; color: #7c82ff; margin-top: 4px; }
     </style>
 </head>
 <body>
-    <div class="shell">
-        <header class="topbar">
-            <div class="title-row">
-                <div class="title">
-                    <h1>AXIS Live Spatial Intelligence MVP</h1>
-                    <p>Browser camera + live object recognition + searchable scene graph + 3D scene viewer.</p>
+    <div class="header">
+        <h1>AXIS - 3D Scene Builder</h1>
+        <p>Real-time camera-based 3D scene reconstruction</p>
+    </div>
+    
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="video-container">
+                <div class="video-header">
+                    <h3>Camera Feed</h3>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <span style="font-size:12px;color:#7c82ff;">Camera: <span id="cam-status" class="status-dot"></span></span>
+                        <span style="font-size:12px;color:#7c82ff;">Model: <span id="model-status" class="status-dot"></span></span>
+                    </div>
                 </div>
-                <div class="status-row">
-                    <div class="pill"><span class="dot" id="camera-dot"></span><span id="camera-status">Camera idle</span></div>
-                    <div class="pill"><span class="dot" id="detector-dot"></span><span id="detector-status">Detector loading</span></div>
-                    <div class="pill"><span class="dot" id="backend-dot"></span><span id="backend-status">Backend connecting</span></div>
+                <div class="video-wrapper">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="overlay"></canvas>
+                </div>
+                <div class="controls">
+                    <button class="primary" id="start-btn">Start Camera</button>
+                    <button class="secondary" id="reset-btn">Reset Scene</button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat"><strong id="stat-objects">0</strong><span>Objects</span></div>
+                    <div class="stat"><strong id="stat-points">0</strong><span>3D Points</span></div>
+                    <div class="stat"><strong id="stat-fps">0</strong><span>FPS</span></div>
+                    <div class="stat"><strong id="stat-detections">0</strong><span>Detections</span></div>
                 </div>
             </div>
-        </header>
-
-        <main class="content">
-            <section class="panel">
+            
+            <div class="info-box">
+                <h4>Instructions</h4>
+                <ul>
+                    <li>Click "Start Camera" to begin</li>
+                    <li>Point camera at objects</li>
+                    <li>3D scene builds automatically</li>
+                    <li>Rotate 3D view with mouse</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <div class="panel">
                 <div class="panel-head">
-                    <div>
-                        <h2>Webcam Ingestion</h2>
-                        <span>Live browser camera feed with on-device recognition</span>
-                    </div>
-                    <span id="fps-label">0 detections/sec</span>
+                    <h3>3D Scene View</h3>
+                    <span style="font-size:12px;color:#7c82ff;" id="scene-info">0 objects mapped</span>
                 </div>
-                <div class="panel-body camera-stack">
-                    <div class="video-shell">
-                        <video id="webcam" autoplay playsinline muted></video>
-                        <canvas id="overlay"></canvas>
-                        <div class="video-overlay">
-                            <div class="overlay-chip" id="model-chip">Model: loading</div>
-                            <div class="overlay-chip" id="object-chip">Objects: 0</div>
+                <div class="panel-body">
+                    <div id="three-container">
+                        <canvas id="three-canvas"></canvas>
+                        <div class="loading-3d" id="loading-3d">
+                            <div class="spinner"></div>
+                            <div>Initializing 3D Scene...</div>
                         </div>
                     </div>
-                    <div class="control-row">
-                        <button class="primary" id="start-camera">Start Camera</button>
-                        <button class="secondary" id="reset-scene">Reset Scene</button>
-                        <button class="secondary" id="pause-detection">Pause Detection</button>
-                        <button class="secondary" id="reset-points">Reset Points</button>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat"><strong id="stat-objects">0</strong><span>Semantic Objects</span></div>
-                        <div class="stat"><strong id="stat-points">0</strong><span>3D Points</span></div>
-                        <div class="stat"><strong id="stat-keyframes">0</strong><span>Keyframes</span></div>
-                        <div class="stat"><strong id="stat-edges">0</strong><span>Scene Relations</span></div>
-                    </div>
-                    <p class="footer-note">3D scene builds in real-time as you move the camera. Objects are positioned by depth estimation. Point cloud grows with each detection. Scene graph shows spatial relationships between objects.</p>
                 </div>
-            </section>
-
-            <section class="panel">
+            </div>
+            
+            <div class="panel">
                 <div class="panel-head">
-                    <div>
-                        <h2>3D Scene Viewer</h2>
-                        <span>Pseudo-3D world model from the live detection stream</span>
-                    </div>
-                    <span id="scene-summary">No scene yet</span>
+                    <h3>Detected Objects</h3>
                 </div>
                 <div class="panel-body">
-                    <div class="viewer" id="three-root"></div>
-                    <div style="height: 16px"></div>
-                    <div class="search-box">
-                        <input id="search-input" placeholder="Search the scene: bottle, person, laptop, chair...">
-                        <button class="primary" id="search-button">Search</button>
-                    </div>
-                    <div style="height: 12px"></div>
-                    <div class="list" id="search-results">
-                        <div class="item muted">Search results will appear here.</div>
+                    <div class="object-list" id="object-list">
+                        <div class="object-item muted">Point camera at objects to detect them</div>
                     </div>
                 </div>
-            </section>
-
-            <section class="panel">
-                <div class="panel-head">
-                    <div>
-                        <h2>Scene Intelligence</h2>
-                        <span>Tracked objects, relationships, events, and natural language</span>
-                    </div>
-                    <span id="ws-status">Realtime sync starting</span>
-                </div>
-                <div class="panel-body">
-                    <h3 style="margin: 0 0 10px">Tracked Objects</h3>
-                    <div class="list" id="object-list">
-                        <div class="item muted">Start the camera to populate the live object map.</div>
-                    </div>
-                    <div style="height: 16px"></div>
-                    <h3 style="margin: 0 0 10px">Ask AXIS</h3>
-                    <div class="ask-box">
-                        <textarea id="question-input" placeholder="Ask things like: Where is the bottle? How many persons do you see? Describe the scene."></textarea>
-                        <button class="primary" id="ask-button">Ask</button>
-                    </div>
-                    <div style="height: 10px"></div>
-                    <div class="response-box" id="response-box">AXIS will answer from the live scene state.</div>
-                    <div style="height: 16px"></div>
-                    <h3 style="margin: 0 0 10px">Scene Graph</h3>
-                    <div class="graph-list" id="graph-list">
-                        <div class="graph-edge muted">Relationships appear once multiple objects are detected.</div>
-                    </div>
-                    <div style="height: 16px"></div>
-                    <h3 style="margin: 0 0 10px">Recent Events</h3>
-                    <div class="event-list" id="event-list">
-                        <div class="event muted">Waiting for camera activity.</div>
-                    </div>
-                </div>
-            </section>
-        </main>
+            </div>
+        </div>
     </div>
-
+    
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
-
+    
     <script type="module">
         import * as THREE from "three";
         import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
+        
+        console.log("AXIS: Starting...");
+        
+        // State
+        let stream = null;
+        let detector = null;
+        let pointCloud = [];
+        let detectionCount = 0;
+        let fps = 0;
+        let lastFpsTime = performance.now();
+        let frameCount = 0;
+        
+        // DOM
         const video = document.getElementById("webcam");
         const overlay = document.getElementById("overlay");
         const overlayCtx = overlay.getContext("2d");
+        const threeContainer = document.getElementById("three-container");
+        const threeCanvas = document.getElementById("three-canvas");
+        const loading3d = document.getElementById("loading-3d");
         const objectList = document.getElementById("object-list");
-        const graphList = document.getElementById("graph-list");
-        const eventList = document.getElementById("event-list");
-        const searchResults = document.getElementById("search-results");
-        const responseBox = document.getElementById("response-box");
-        const sceneSummary = document.getElementById("scene-summary");
-
-        let detector = null;
-        let stream = null;
-        let detectionLoop = null;
-        let pollLoop = null;
-        let websocket = null;
-        let detectionPaused = false;
-        let frameId = 0;
-        let detectionSamples = 0;
-        let lastFpsTick = performance.now();
-        let selectedObjectId = null;
-        let latestState = null;
-
-        const objectMeshes = new Map();
-        const trajectoryMarkers = [];
-        let pointCloud = null;
-        let pointCloudPoints = [];
-        const maxPointCloudSize = 2000;
         
-        // Camera frustum visualization
-        let cameraFrustum = null;
-        let floorMesh = null;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio || 1);
-        const container = document.getElementById("three-root");
-        const width = Math.max(container.clientWidth || 800, 400);
-        const height = 430;
-        renderer.setSize(width, height);
-        container.appendChild(renderer.domElement);
-        renderer.domElement.style.display = 'block';
-
+        // Three.js
+        const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true, alpha: false });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setClearColor(0x08101f, 1);
+        
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x08101f);
-
-        const camera = new THREE.PerspectiveCamera(58, document.getElementById("three-root").clientWidth / 430, 0.1, 100);
-        camera.position.set(0, 2.8, 8);
-
+        const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+        camera.position.set(0, 3, 8);
+        
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-
+        
+        // Lights
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
-        keyLight.position.set(5, 8, 6);
-        scene.add(keyLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
         
-        // Enhanced floor with perspective grid
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0a1428,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide
-        });
-        floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-        floorMesh.rotation.x = -Math.PI / 2;
-        floorMesh.position.y = -0.01;
-        scene.add(floorMesh);
+        // Grid
+        scene.add(new THREE.GridHelper(20, 20, 0x1f4372, 0x142442));
+        scene.add(new THREE.AxesHelper(2));
         
-        // Grid on floor
-        const gridHelper = new THREE.GridHelper(20, 40, 0x1f4372, 0x142442);
-        gridHelper.position.y = 0;
-        scene.add(gridHelper);
+        // Objects
+        const objectMeshes = new Map();
+        let pointCloudMesh = null;
         
-        // Back wall reference
-        const wallGeometry = new THREE.PlaneGeometry(20, 10);
-        const wallMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0a1428,
-            transparent: true,
-            opacity: 0.3,
-            side: THREE.DoubleSide
-        });
-        const wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-        wallMesh.position.set(0, 4, -10);
-        scene.add(wallMesh);
+        // Resize
+        function resize() {
+            const w = threeContainer.clientWidth;
+            const h = threeContainer.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        resize();
+        window.addEventListener("resize", resize);
         
-        // Axis helper
-        scene.add(new THREE.AxesHelper(1.5));
+        console.log("AXIS: Three.js ready");
+        loading3d.style.display = "none";
         
-        // Initialize point cloud
-        function initPointCloud() {
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(maxPointCloudSize * 3);
-            const colors = new Float32Array(maxPointCloudSize * 3);
-            
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            
-            const material = new THREE.PointsMaterial({
-                size: 0.05,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                sizeAttenuation: true
-            });
-            
-            pointCloud = new THREE.Points(geometry, material);
-            scene.add(pointCloud);
-        }
-        
-        // Add points to cloud from detected objects
-        function addPointsFromDetection(bbox, depth, color) {
-            const [x, y, w, h] = bbox;
-            const centerX = x + w / 2;
-            const centerY = y + h / 2;
-            
-            // Convert to 3D position
-            const normX = (centerX / 640) * 10 - 5;
-            const normY = -((centerY / 480) * 7.5 - 3.75);
-            
-            // Add multiple points per detection
-            for (let i = 0; i < 15; i++) {
-                const px = normX + (Math.random() - 0.5) * w * 0.03;
-                const py = normY + (Math.random() - 0.5) * h * 0.03;
-                const pz = -depth + (Math.random() - 0.5) * 0.2;
-                
-                if (pointCloudPoints.length < maxPointCloudSize) {
-                    pointCloudPoints.push({
-                        x: px, y: py, z: pz,
-                        r: color[0], g: color[1], b: color[2]
-                    });
-                }
-            }
-            
-            updatePointCloud();
-        }
-        
-        function updatePointCloud() {
-            if (!pointCloud) return;
-            
-            const positions = pointCloud.geometry.attributes.position.array;
-            const colors = pointCloud.geometry.attributes.color.array;
-            
-            for (let i = 0; i < pointCloudPoints.length && i < maxPointCloudSize; i++) {
-                const p = pointCloudPoints[i];
-                positions[i * 3] = p.x;
-                positions[i * 3 + 1] = p.y;
-                positions[i * 3 + 2] = p.z;
-                colors[i * 3] = p.r;
-                colors[i * 3 + 1] = p.g;
-                colors[i * 3 + 2] = p.b;
-            }
-            
-            // Clear remaining points
-            for (let i = pointCloudPoints.length; i < maxPointCloudSize; i++) {
-                positions[i * 3] = 0;
-                positions[i * 3 + 1] = -100;
-                positions[i * 3 + 2] = 0;
-            }
-            
-            pointCloud.geometry.attributes.position.needsUpdate = true;
-            pointCloud.geometry.attributes.color.needsUpdate = true;
-            pointCloud.geometry.setDrawRange(0, pointCloudPoints.length);
-        }
-        
-        initPointCloud();
-
-        const api = {
-            async get(path) {
-                const response = await fetch(path);
-                if (!response.ok) {
-                    throw new Error(`GET ${path} failed`);
-                }
-                return response.json();
-            },
-            async post(path, payload = {}) {
-                const response = await fetch(path, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                });
-                if (!response.ok) {
-                    throw new Error(`POST ${path} failed`);
-                }
-                return response.json();
-            },
-        };
-
-        function setStatus(id, text, level) {
-            document.getElementById(`${id}-status`).textContent = text;
-            const dot = document.getElementById(`${id}-dot`);
-            dot.classList.remove("good", "bad");
-            if (level === "good") dot.classList.add("good");
-            if (level === "bad") dot.classList.add("bad");
-        }
-
-        function drawDetections(predictions) {
-            overlay.width = video.videoWidth || 640;
-            overlay.height = video.videoHeight || 480;
-            overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
-            overlayCtx.lineWidth = 2;
-            overlayCtx.font = "14px Inter, sans-serif";
-
-            predictions.forEach((prediction) => {
-                const [x, y, width, height] = prediction.bbox;
-                overlayCtx.strokeStyle = "#5bd2ff";
-                overlayCtx.fillStyle = "rgba(91, 210, 255, 0.16)";
-                overlayCtx.fillRect(x, y, width, height);
-                overlayCtx.strokeRect(x, y, width, height);
-                const label = `${prediction.class} ${Math.round(prediction.score * 100)}%`;
-                overlayCtx.fillStyle = "#08101f";
-                overlayCtx.fillRect(x, Math.max(0, y - 24), Math.max(120, label.length * 8), 20);
-                overlayCtx.fillStyle = "#e9efff";
-                overlayCtx.fillText(label, x + 6, Math.max(14, y - 9));
-            });
-        }
-
-        function renderObjects(objects) {
-            if (!objects.length) {
-                objectList.innerHTML = '<div class="item muted">No recognized objects yet.</div>';
-                return;
-            }
-
-            objectList.innerHTML = objects
-                .sort((a, b) => b.confidence - a.confidence)
-                .map((obj) => {
-                    const active = selectedObjectId === obj.object_id ? "active" : "";
-                    return `
-                        <div class="item ${active}" data-object-id="${obj.object_id}">
-                            <strong>${obj.class_name}</strong>
-                            <div class="muted">confidence ${Math.round(obj.confidence * 100)}%, observations ${obj.observation_count}</div>
-                            <div class="muted">x ${obj.position.x.toFixed(2)} | y ${obj.position.y.toFixed(2)} | z ${obj.position.z.toFixed(2)}</div>
-                        </div>
-                    `;
-                })
-                .join("");
-
-            objectList.querySelectorAll("[data-object-id]").forEach((element) => {
-                element.addEventListener("click", () => {
-                    selectedObjectId = element.dataset.objectId;
-                    renderObjects(objects);
-                    highlightSelectedObject();
-                });
-            });
-        }
-
-        function renderSearchResults(results) {
-            if (!results.length) {
-                searchResults.innerHTML = '<div class="item muted">No search results yet.</div>';
-                return;
-            }
-
-            searchResults.innerHTML = results
-                .map((result) => `
-                    <div class="item" data-search-object-id="${result.object_id}">
-                        <strong>${result.class_name}</strong>
-                        <div class="muted">similarity ${Math.round(result.similarity * 100)}%, confidence ${Math.round(result.confidence * 100)}%</div>
-                        <div class="muted">x ${result.position.x.toFixed(2)} | y ${result.position.y.toFixed(2)} | z ${result.position.z.toFixed(2)}</div>
-                    </div>
-                `)
-                .join("");
-
-            searchResults.querySelectorAll("[data-search-object-id]").forEach((element) => {
-                element.addEventListener("click", () => {
-                    selectedObjectId = element.dataset.searchObjectId;
-                    highlightSelectedObject();
-                    if (latestState) {
-                        renderObjects(latestState.objects || []);
-                    }
-                });
-            });
-        }
-
-        function renderGraph(graph) {
-            const edges = graph?.edges || [];
-            if (!edges.length) {
-                graphList.innerHTML = '<div class="graph-edge muted">Relationships appear once multiple objects are detected.</div>';
-                return;
-            }
-
-            graphList.innerHTML = edges
-                .slice(0, 14)
-                .map((edge) => `<div class="graph-edge">${edge.source} <strong>${edge.relation}</strong> ${edge.target}</div>`)
-                .join("");
-        }
-
-        function renderEvents(events) {
-            if (!events.length) {
-                eventList.innerHTML = '<div class="event muted">Waiting for camera activity.</div>';
-                return;
-            }
-            eventList.innerHTML = events
-                .map((event) => {
-                    const when = new Date(event.timestamp * 1000).toLocaleTimeString();
-                    return `<div class="event"><strong>${event.type}</strong> - ${event.description}<div class="muted">${when}</div></div>`;
-                })
-                .join("");
-        }
-
-        function updateStats(state) {
-            document.getElementById("stat-objects").textContent = state.semantic_objects || 0;
-            document.getElementById("stat-points").textContent = state.map_points || 0;
-            document.getElementById("stat-keyframes").textContent = state.keyframes || 0;
-            document.getElementById("stat-edges").textContent = (state.scene_graph?.edges || []).length;
-            document.getElementById("object-chip").textContent = `Objects: ${state.semantic_objects || 0}`;
-            sceneSummary.textContent = state.semantic_objects ? `${state.semantic_objects} objects in the scene map` : "No scene yet";
-        }
-
-        function highlightSelectedObject() {
-            objectMeshes.forEach((mesh, objectId) => {
-                mesh.material.emissive.setHex(objectId === selectedObjectId ? 0x5bd2ff : 0x000000);
-                mesh.material.emissiveIntensity = objectId === selectedObjectId ? 0.7 : 0.0;
-            });
-        }
-
-        const connectionLines = [];
-        const depthMarkers = [];
-        
-        function updateThreeScene(state) {
-            latestState = state;
-            const objects = state.objects || [];
-            const seen = new Set();
-
-            objects.forEach((obj, index) => {
-                seen.add(obj.object_id);
-                let mesh = objectMeshes.get(obj.object_id);
-                
-                // Color based on depth (closer = warmer color)
-                const depthFactor = Math.max(0, Math.min(1, (obj.position.z - 1) / 5));
-                const hue = 0.55 - depthFactor * 0.4; // Blue (far) to Green/Yellow (close)
-                const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
-                
-                if (!mesh) {
-                    const geometry = new THREE.BoxGeometry(obj.size.x, obj.size.y, obj.size.z);
-                    const material = new THREE.MeshStandardMaterial({
-                        color: color,
-                        roughness: 0.3,
-                        metalness: 0.1,
-                        transparent: true,
-                        opacity: 0.85,
-                    });
-                    mesh = new THREE.Mesh(geometry, material);
-                    mesh.userData.objectId = obj.object_id;
-                    mesh.userData.depth = obj.position.z;
-                    scene.add(mesh);
-                    objectMeshes.set(obj.object_id, mesh);
-                } else {
-                    // Update color based on current depth
-                    mesh.material.color = color;
-                    mesh.userData.depth = obj.position.z;
-                }
-                
-                // Position object in 3D space
-                mesh.position.set(obj.position.x, obj.position.y, obj.position.z);
-                
-                // Add vertical line to floor showing depth
-                if (obj.position.y > 0.1) {
-                    addDepthMarker(obj.position.x, 0, obj.position.z, obj.position.y, color);
-                }
-            });
-
-            objectMeshes.forEach((mesh, objectId) => {
-                if (!seen.has(objectId)) {
-                    scene.remove(mesh);
-                    mesh.geometry.dispose();
-                    mesh.material.dispose();
-                    objectMeshes.delete(objectId);
-                }
-            });
-
-            // Update trajectory markers
-            trajectoryMarkers.forEach((marker) => scene.remove(marker));
-            trajectoryMarkers.length = 0;
-            (state.trajectory || []).slice(-25).forEach((point) => {
-                const marker = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.05, 10, 10),
-                    new THREE.MeshBasicMaterial({ color: 0xff6b6b })
-                );
-                marker.position.set(point.x, point.y, point.z);
-                trajectoryMarkers.push(marker);
-                scene.add(marker);
-            });
-            
-            // Draw trajectory line
-            if (state.trajectory && state.trajectory.length > 1) {
-                const lineGeometry = new THREE.BufferGeometry().setFromPoints(
-                    state.trajectory.slice(-30).map(p => new THREE.Vector3(p.x, p.y, p.z))
-                );
-                const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff6b6b, opacity: 0.5, transparent: true });
-                const line = new THREE.Line(lineGeometry, lineMaterial);
-                trajectoryMarkers.push(line);
-                scene.add(line);
-            }
-            
-            // Update point cloud from map points
-            if (state.map_points > 0 && state.objects) {
-                state.objects.forEach((obj, i) => {
-                    if (Math.random() < 0.3 && pointCloudPoints.length < maxPointCloudSize) {
-                        // Generate points on object surface
-                        for (let j = 0; j < 5; j++) {
-                            const hue = (i * 0.17) % 1;
-                            const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
-                            pointCloudPoints.push({
-                                x: obj.position.x + (Math.random() - 0.5) * obj.size.x,
-                                y: obj.position.y + (Math.random() - 0.5) * obj.size.y,
-                                z: obj.position.z + (Math.random() - 0.5) * obj.size.z,
-                                r: color.r, g: color.g, b: color.b
-                            });
-                        }
-                    }
-                });
-                updatePointCloud();
-            }
-
-            highlightSelectedObject();
-        }
-        
-        function addDepthMarker(x, y, z, height, color) {
-            const points = [
-                new THREE.Vector3(x, y, z),
-                new THREE.Vector3(x, y + height, z)
-            ];
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
-            const material = new THREE.LineBasicMaterial({ color: color, opacity: 0.3, transparent: true });
-            const line = new THREE.Line(geometry, material);
-            depthMarkers.push(line);
-            scene.add(line);
-            
-            // Remove after 2 seconds to keep scene clean
-            setTimeout(() => {
-                scene.remove(line);
-                geometry.dispose();
-                material.dispose();
-            }, 2000);
-        }
-
-        function applyState(state) {
-            setStatus("backend", "Backend connected", "good");
-            document.getElementById("ws-status").textContent = "Realtime sync active";
-            latestState = state;
-            updateStats(state);
-            renderObjects(state.objects || []);
-            renderGraph(state.scene_graph || {});
-            renderEvents(state.recent_events || []);
-            updateThreeScene(state);
-        }
-
-        async function loadDetector() {
-            setStatus("detector", "Loading...", "neutral");
-            console.log("Loading COCO-SSD model...");
-            try {
-                detector = await cocoSsd.load();
-                console.log("Detector loaded!");
-                setStatus("detector", "Detector ready", "good");
-                document.getElementById("model-chip").textContent = "Model: coco-ssd";
-            } catch (error) {
-                console.error("Detector error:", error);
-                setStatus("detector", "Detector failed", "bad");
-                document.getElementById("model-chip").textContent = "Model: failed";
-                responseBox.textContent = "Failed to load model. Check browser console (F12).";
-            }
-        }
-
-        async function startCamera() {
-            if (stream) return;
-            console.log("Starting camera...");
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480, facingMode: "environment" },
-                    audio: false,
-                });
-                video.srcObject = stream;
-                await video.play();
-                await api.post("/camera/start");
-                console.log("Camera active!");
-                setStatus("camera", "Camera live", "good");
-                startDetectionLoop();
-            } catch (error) {
-                console.error("Camera error:", error);
-                setStatus("camera", "Camera blocked", "bad");
-                responseBox.textContent = "Camera access denied. Allow camera in browser settings.";
-            }
-        }
-
-        async function stopCamera() {
-            if (!stream) {
-                return;
-            }
-            stream.getTracks().forEach((track) => track.stop());
-            stream = null;
-            video.srcObject = null;
-            clearInterval(detectionLoop);
-            detectionLoop = null;
-            await api.post("/camera/stop");
-            setStatus("camera", "Camera idle", "bad");
-        }
-
-        async function runDetection() {
-            if (!detector || !stream || detectionPaused || video.readyState < 2) {
-                return;
-            }
-            const predictions = await detector.detect(video, 8);
-            const filtered = predictions.filter((item) => item.score >= 0.55);
-            drawDetections(filtered);
-            detectionSamples += 1;
-
-            const now = performance.now();
-            if (now - lastFpsTick > 1000) {
-                document.getElementById("fps-label").textContent = `${detectionSamples} detections/sec`;
-                detectionSamples = 0;
-                lastFpsTick = now;
-            }
-            
-            // Add detected objects to point cloud in real-time
-            filtered.forEach((pred) => {
-                // Estimate depth based on bounding box size
-                const area = (pred.bbox[2] * pred.bbox[3]) / (640 * 480);
-                const depth = Math.max(1, 6 - area * 8); // Larger object = closer
-                
-                // Color based on object class (simple hash)
-                const colorHash = hashCode(pred.class);
-                const hue = (colorHash % 360) / 360;
-                const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
-                
-                // Add points to cloud
-                addPointsFromDetection(pred.bbox, depth, [color.r, color.g, color.b]);
-            });
-
-            const payload = {
-                frame_id: ++frameId,
-                camera_active: true,
-                detections: filtered.map((item) => ({
-                    label: item.class,
-                    score: item.score,
-                    bbox: {
-                        x: item.bbox[0],
-                        y: item.bbox[1],
-                        width: item.bbox[2],
-                        height: item.bbox[3],
-                    },
-                })),
-            };
-
-            const state = await api.post("/scene/update", payload);
-            applyState(state);
-        }
-        
-        function hashCode(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        }
-
-        function startDetectionLoop() {
-            clearInterval(detectionLoop);
-            detectionLoop = setInterval(() => {
-                runDetection().catch((error) => {
-                    console.error(error);
-                    setStatus("backend", "Backend update failed", "bad");
-                });
-            }, 900);
-        }
-
-        async function refreshState() {
-            try {
-                const state = await api.get("/state");
-                applyState(state);
-            } catch (error) {
-                console.error(error);
-                setStatus("backend", "Backend unavailable", "bad");
-            }
-        }
-
-        function connectWebSocket() {
-            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-            websocket = new WebSocket(`${protocol}://${window.location.host}/ws/scene`);
-
-            websocket.onopen = () => {
-                document.getElementById("ws-status").textContent = "Realtime sync active";
-            };
-
-            websocket.onmessage = (event) => {
-                const payload = JSON.parse(event.data);
-                if (payload.type === "state") {
-                    applyState(payload);
-                } else if (payload.type === "search_results") {
-                    renderSearchResults(payload.results || []);
-                } else if (payload.type === "llm_response") {
-                    responseBox.textContent = payload.response || "No response";
-                }
-            };
-
-            websocket.onerror = () => {
-                document.getElementById("ws-status").textContent = "Realtime sync retrying";
-            };
-
-            websocket.onclose = () => {
-                document.getElementById("ws-status").textContent = "Realtime sync reconnecting";
-                setTimeout(connectWebSocket, 1800);
-            };
-        }
-
-        async function searchScene() {
-            const query = document.getElementById("search-input").value.trim();
-            if (!query) {
-                return;
-            }
-            const result = await api.post("/search", { query, top_k: 5 });
-            renderSearchResults(result.results || []);
-            if (result.results?.length) {
-                selectedObjectId = result.results[0].object_id;
-                highlightSelectedObject();
-            }
-        }
-
-        async function askAxis() {
-            const question = document.getElementById("question-input").value.trim();
-            if (!question) {
-                return;
-            }
-            responseBox.textContent = "Thinking over the current scene...";
-            const response = await api.post("/query", { question, context: true });
-            responseBox.textContent = response.response;
-        }
-
-        async function resetScene() {
-            const state = await api.post("/scene/reset");
-            searchResults.innerHTML = '<div class="item muted">Search results will appear here.</div>';
-            responseBox.textContent = "Scene has been reset. Start scanning again.";
-            selectedObjectId = null;
-            // Also clear point cloud
-            pointCloudPoints = [];
-            updatePointCloud();
-            applyState(state);
-        }
-        
-        function resetPointCloud() {
-            pointCloudPoints = [];
-            updatePointCloud();
-            document.getElementById("stat-points").textContent = "0";
-        }
-
-        function toggleDetectionPause() {
-            detectionPaused = !detectionPaused;
-            document.getElementById("pause-detection").textContent = detectionPaused ? "Resume Detection" : "Pause Detection";
-        }
-
+        // Animate
         function animate() {
             requestAnimationFrame(animate);
-            if (controls) controls.update();
-            if (renderer && scene && camera) {
-                renderer.render(scene, camera);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        // Load model
+        async function loadModel() {
+            try {
+                console.log("Loading COCO-SSD...");
+                detector = await cocoSsd.load();
+                document.getElementById("model-status").classList.add("good");
+                console.log("Model loaded!");
+            } catch (e) {
+                console.error("Model error:", e);
+                document.getElementById("model-status").classList.add("bad");
             }
         }
-
-        window.addEventListener("resize", () => {
-            const container = document.getElementById("three-root");
-            if (container && renderer && camera) {
-                const width = container.clientWidth || 800;
-                camera.aspect = width / 430;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, 430);
-            }
-        });
         
-        // Ensure canvas is visible
-        setTimeout(() => {
-            const canvas = document.querySelector("#three-root canvas");
-            if (canvas) {
-                canvas.style.display = 'block';
-                canvas.style.width = '100%';
-                canvas.style.height = '430px';
-                console.log("Three.js canvas initialized");
-            } else {
-                console.warn("No Three.js canvas found - checking for errors");
-                // Create a fallback visual
-                const container = document.getElementById("three-root");
-                container.innerHTML = '<div style="color:#5bd2ff;text-align:center;padding:50px;font-family:monospace">Loading 3D scene...</div>';
+        // Start camera
+        async function startCamera() {
+            try {
+                console.log("Starting camera...");
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = stream;
+                await video.play();
+                
+                overlay.width = video.videoWidth || 640;
+                overlay.height = video.videoHeight || 480;
+                
+                document.getElementById("cam-status").classList.add("good");
+                document.getElementById("start-btn").textContent = "Stop Camera";
+                document.getElementById("start-btn").className = "secondary";
+                
+                console.log("Camera started!");
+                detectLoop();
+            } catch (e) {
+                console.error("Camera error:", e);
+                document.getElementById("cam-status").classList.add("bad");
             }
-            // Force resize to recalculate
-            window.dispatchEvent(new Event('resize'));
-        }, 500);
-
-        document.getElementById("start-camera").addEventListener("click", async () => {
-            if (stream) {
-                await stopCamera();
-                document.getElementById("start-camera").textContent = "Start Camera";
-            } else {
-                await startCamera();
-                document.getElementById("start-camera").textContent = "Stop Camera";
+        }
+        
+        // Stop camera
+        function stopCamera() {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+            stream = null;
+            document.getElementById("cam-status").classList.remove("good");
+            document.getElementById("start-btn").textContent = "Start Camera";
+            document.getElementById("start-btn").className = "primary";
+        }
+        
+        // Detect loop
+        async function detectLoop() {
+            if (!stream || !detector) {
+                if (stream) setTimeout(detectLoop, 100);
+                return;
             }
-        });
-        document.getElementById("reset-scene").addEventListener("click", () => resetScene().catch(console.error));
-        document.getElementById("pause-detection").addEventListener("click", toggleDetectionPause);
-        document.getElementById("reset-points").addEventListener("click", resetPointCloud);
-        document.getElementById("refresh-state").addEventListener("click", () => refreshState().catch(console.error));
-        document.getElementById("search-button").addEventListener("click", () => searchScene().catch(console.error));
-        document.getElementById("ask-button").addEventListener("click", () => askAxis().catch(console.error));
-        document.getElementById("search-input").addEventListener("keydown", (event) => {
-            if (event.key === "Enter") {
-                searchScene().catch(console.error);
+            
+            try {
+                const preds = await detector.detect(video);
+                const filtered = preds.filter(p => p.score > 0.5);
+                
+                // Draw boxes
+                overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+                filtered.forEach(p => {
+                    const [x, y, w, h] = p.bbox;
+                    overlayCtx.strokeStyle = "#5bd2ff";
+                    overlayCtx.lineWidth = 2;
+                    overlayCtx.strokeRect(x, y, w, h);
+                    overlayCtx.fillStyle = "rgba(91,210,255,0.2)";
+                    overlayCtx.fillRect(x, y, w, h);
+                    overlayCtx.fillStyle = "#fff";
+                    overlayCtx.font = "12px sans-serif";
+                    overlayCtx.fillText(p.class + " " + Math.round(p.score*100) + "%", x, y > 15 ? y-5 : y+h+15);
+                });
+                
+                detectionCount += filtered.length;
+                updateStats(filtered);
+                update3DScene(filtered);
+                updateObjectList(filtered);
+                
+                frameCount++;
+                const now = performance.now();
+                if (now - lastFpsTime > 1000) {
+                    fps = frameCount;
+                    frameCount = 0;
+                    lastFpsTime = now;
+                    document.getElementById("stat-fps").textContent = fps;
+                }
+            } catch (e) {
+                console.error("Detect error:", e);
             }
-        });
-
-        loadDetector();
-        connectWebSocket();
-        refreshState();
-        pollLoop = setInterval(() => refreshState().catch(() => {}), 3000);
-        animate();
+            
+            if (stream) requestAnimationFrame(detectLoop);
+        }
+        
+        // Update stats
+        function updateStats(preds) {
+            document.getElementById("stat-objects").textContent = objectMeshes.size;
+            document.getElementById("stat-detections").textContent = detectionCount;
+            document.getElementById("stat-points").textContent = pointCloud.length;
+            document.getElementById("scene-info").textContent = objectMeshes.size + " objects";
+        }
+        
+        // Update 3D
+        function update3DScene(preds) {
+            const existing = new Set(objectMeshes.keys());
+            
+            preds.forEach((p, i) => {
+                const id = p.class + "_" + i;
+                existing.delete(id);
+                
+                const area = (p.bbox[2] * p.bbox[3]) / (640 * 480);
+                const depth = Math.max(1, 8 - area * 15);
+                const hue = (p.class.charCodeAt(0) * 17) % 360 / 360;
+                const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
+                
+                if (!objectMeshes.has(id)) {
+                    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                    const mat = new THREE.MeshStandardMaterial({ color: color, transparent: true, opacity: 0.8 });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.userData.id = id;
+                    scene.add(mesh);
+                    objectMeshes.set(id, mesh);
+                    addPoints(p.bbox, depth, color);
+                }
+                
+                const mesh = objectMeshes.get(id);
+                mesh.position.set((p.bbox[0] + p.bbox[2]/2) / 640 * 10 - 5, 0.5, -depth + 5);
+            });
+            
+            existing.forEach(id => {
+                const m = objectMeshes.get(id);
+                scene.remove(m);
+                m.geometry.dispose();
+                m.material.dispose();
+                objectMeshes.delete(id);
+            });
+        }
+        
+        // Add points
+        function addPoints(bbox, depth, color) {
+            const x = bbox[0], y = bbox[1], w = bbox[2], h = bbox[3];
+            for (let i = 0; i < 8; i++) {
+                if (pointCloud.length < 500) {
+                    pointCloud.push({
+                        x: x/640 * 10 - 5 + (Math.random()-0.5) * w/640 * 5,
+                        y: y/480 * 5 + (Math.random()-0.5) * h/480 * 2,
+                        z: -depth + 5 + (Math.random()-0.5) * 0.5,
+                        c: color.clone()
+                    });
+                }
+            }
+            updatePC();
+        }
+        
+        // Update point cloud
+        function updatePC() {
+            if (pointCloudMesh) {
+                scene.remove(pointCloudMesh);
+                pointCloudMesh.geometry.dispose();
+                pointCloudMesh.material.dispose();
+            }
+            if (pointCloud.length === 0) return;
+            
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(pointCloud.length * 3);
+            const col = new Float32Array(pointCloud.length * 3);
+            
+            pointCloud.forEach((p, i) => {
+                pos[i*3] = p.x; pos[i*3+1] = p.y; pos[i*3+2] = p.z;
+                col[i*3] = p.c.r; col[i*3+1] = p.c.g; col[i*3+2] = p.c.b;
+            });
+            
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+            
+            const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.8 });
+            pointCloudMesh = new THREE.Points(geo, mat);
+            scene.add(pointCloudMesh);
+        }
+        
+        // Update list
+        function updateObjectList(preds) {
+            if (!preds.length) {
+                objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
+                return;
+            }
+            objectList.innerHTML = preds.map(p => 
+                '<div class="object-item"><strong>' + p.class + '</strong><div class="muted">' + Math.round(p.score*100) + '% confidence</div></div>'
+            ).join('');
+        }
+        
+        // Reset
+        function resetScene() {
+            objectMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+            objectMeshes.clear();
+            if (pointCloudMesh) { scene.remove(pointCloudMesh); pointCloudMesh.geometry.dispose(); pointCloudMesh.material.dispose(); }
+            pointCloud = [];
+            detectionCount = 0;
+            document.getElementById("stat-objects").textContent = "0";
+            document.getElementById("stat-points").textContent = "0";
+            document.getElementById("stat-detections").textContent = "0";
+            document.getElementById("scene-info").textContent = "0 objects";
+            objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
+        }
+        
+        // Events
+        document.getElementById("start-btn").addEventListener("click", function() { stream ? stopCamera() : startCamera(); });
+        document.getElementById("reset-btn").addEventListener("click", resetScene);
+        
+        // Init
+        loadModel();
+        console.log("AXIS: Ready!");
     </script>
 </body>
 </html>
