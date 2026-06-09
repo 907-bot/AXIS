@@ -1,0 +1,24 @@
+# AXIS - Minimal requirements for Docker deployment
+# The frontend handles ML models (TensorFlow.js) so we don't need PyTorch on server
+
+# Core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
+
+# Computer Vision (minimal for server-side)
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+
+# Utilities
+loguru>=0.7.2
+python-dotenv>=1.0.0
+tqdm>=4.66.0
+pillow>=10.0.0
+pyyaml>=6.0.1
+
+# Web
+websockets>=12.0
+python-multipart>=0.0.6
+aiofiles>=23.2.1
