@@ -1,0 +1,278 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+
+  .wrap { padding: 1.5rem 1rem 2rem; }
+
+  .title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom: 1.25rem; }
+  .sys-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); letter-spacing: .02em; }
+  .sys-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+
+  .legend { display:flex; gap: 12px; flex-wrap:wrap; }
+  .leg-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--color-text-secondary); }
+  .leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* Layer cards */
+  .layer-grid { display:flex; flex-direction:column; gap: 7px; }
+
+  .layer-card {
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .18s;
+  }
+  .layer-card:hover { border-color: var(--color-border-secondary); }
+  .layer-card.active { border-color: var(--color-border-primary); }
+
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+  }
+  .layer-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; flex-shrink: 0;
+  }
+  .layer-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex:1; }
+  .layer-tag {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    font-weight: 500; white-space: nowrap;
+  }
+  .layer-chevron { font-size: 14px; color: var(--color-text-tertiary); transition: transform .2s; }
+  .layer-card.active .layer-chevron { transform: rotate(180deg); }
+
+  .layer-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .25s ease, padding .25s ease;
+    padding: 0 12px;
+    border-top: 0px solid var(--color-border-tertiary);
+  }
+  .layer-card.active .layer-body {
+    max-height: 320px;
+    padding: 10px 12px 12px;
+    border-top-width: 0.5px;
+  }
+
+  .tech-pills { display:flex; gap:5px; flex-wrap:wrap; margin-bottom: 8px; }
+  .pill {
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    border: 0.5px solid var(--color-border-secondary);
+    color: var(--color-text-secondary);
+  }
+  .body-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; }
+  .body-output { font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px; }
+
+  /* Data flow diagram */
+  .flow-wrap {
+    margin-top: 1.25rem;
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-background-primary);
+    padding: 14px 12px;
+  }
+  .flow-title { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Color maps */
+  .c1 { background: #E1F5EE; color: #0F6E56; } /* teal  - capture */
+  .c2 { background: #EEEDFE; color: #534AB7; } /* purple - neural */
+  .c3 { background: #E6F1FB; color: #185FA5; } /* blue  - 3D */
+  .c4 { background: #FAEEDA; color: #854F0B; } /* amber - semantic */
+  .c5 { background: #FAECE7; color: #993C1D; } /* coral - physics */
+  .c6 { background: #FBEAF0; color: #993556; } /* pink  - human */
+  .c7 { background: #EAF3DE; color: #3B6D11; } /* green - lighting */
+  .c8 { background: #F1EFE8; color: #5F5E5A; } /* gray  - reasoning */
+
+  @media (prefers-color-scheme: dark) {
+    .c1 { background: #04342C; color: #9FE1CB; }
+    .c2 { background: #26215C; color: #CECBF6; }
+    .c3 { background: #042C53; color: #B5D4F4; }
+    .c4 { background: #412402; color: #FAC775; }
+    .c5 { background: #4A1B0C; color: #F5C4B3; }
+    .c6 { background: #4B1528; color: #F4C0D1; }
+    .c7 { background: #173404; color: #C0DD97; }
+    .c8 { background: #2C2C2A; color: #D3D1C7; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="title-row">
+    <div>
+      <div class="sys-title">AXIS — system architecture</div>
+      <div class="sys-sub">Adaptive eXtended Intelligence System · 8 frontier layers</div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>Capture</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#7F77DD"></div>Neural</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>3D</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#BA7517"></div>Semantic</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#D85A30"></div>Physics</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#D4537E"></div>Human</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#639922"></div>Lighting</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#888780"></div>Reasoning</div>
+    </div>
+  </div>
+
+  <div class="layer-grid" id="layers"></div>
+
+  <div class="flow-wrap">
+    <div class="flow-title">data flow</div>
+    <svg width="100%" viewBox="0 0 620 72" role="img">
+      <title>AXIS data flow: webcam feeds SLAM and SAM2; SLAM feeds Gaussians; SAM2 feeds Gaussians; Gaussians feed physics, human twin, lighting, and world model; all feed scene graph; scene graph feeds LLM reasoning loop</title>
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Webcam -->
+      <rect x="0" y="24" width="66" height="26" rx="6" fill="#E1F5EE" stroke="#1D9E75" stroke-width="0.5"/>
+      <text x="33" y="37" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#0F6E56">Webcam</text>
+
+      <!-- Arrow to SLAM -->
+      <line x1="67" y1="37" x2="98" y2="20" stroke="#9FE1CB" stroke-width="1" marker-end="url(#a2)"/>
+      <!-- Arrow to SAM2 -->
+      <line x1="67" y1="37" x2="98" y2="54" stroke="#9FE1CB" stroke-width="1" marker-end="url(#a2)"/>
+
+      <!-- SLAM -->
+      <rect x="100" y="6" width="68" height="26" rx="6" fill="#EEEDFE" stroke="#7F77DD" stroke-width="0.5"/>
+      <text x="134" y="19" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#534AB7">SLAM</text>
+
+      <!-- SAM2 -->
+      <rect x="100" y="42" width="68" height="26" rx="6" fill="#E6F1FB" stroke="#378ADD" stroke-width="0.5"/>
+      <text x="134" y="55" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#185FA5">SAM2</text>
+
+      <!-- Arrows to Gaussians -->
+      <line x1="169" y1="19" x2="222" y2="33" stroke="#AFA9EC" stroke-width="1" marker-end="url(#a2)"/>
+      <line x1="169" y1="55" x2="222" y2="41" stroke="#85B7EB" stroke-width="1" marker-end="url(#a2)"/>
+
+      <!-- Gaussians -->
+      <rect x="224" y="22" width="82" height="28" rx="6" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+      <text x="265" y="36" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#854F0B">3DGS Field</text>
+
+      <!-- Fan to 4 modules -->
+      <line x1="307" y1="31" x2="340" y2="10"  stroke="#EF9F27" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="307" y1="33" x2="340" y2="27"  stroke="#EF9F27" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="307" y1="35" x2="340" y2="44"  stroke="#EF9F27" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="307" y1="37" x2="340" y2="61"  stroke="#EF9F27" stroke-width="0.8" marker-end="url(#a2)"/>
+
+      <!-- 4 mid modules -->
+      <rect x="342" y="0"  width="62" height="22" rx="5" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/>
+      <text x="373" y="11" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="500" fill="#993C1D">Physics</text>
+
+      <rect x="342" y="17" width="62" height="22" rx="5" fill="#FBEAF0" stroke="#D4537E" stroke-width="0.5"/>
+      <text x="373" y="28" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="500" fill="#993556">Human</text>
+
+      <rect x="342" y="34" width="62" height="22" rx="5" fill="#EAF3DE" stroke="#639922" stroke-width="0.5"/>
+      <text x="373" y="45" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="500" fill="#3B6D11">Lighting</text>
+
+      <rect x="342" y="51" width="62" height="22" rx="5" fill="#EEEDFE" stroke="#7F77DD" stroke-width="0.5"/>
+      <text x="373" y="62" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="500" fill="#534AB7">World Mdl</text>
+
+      <!-- Arrows to scene graph -->
+      <line x1="405" y1="11" x2="448" y2="30" stroke="#C2C0B6" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="405" y1="28" x2="448" y2="33" stroke="#C2C0B6" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="405" y1="45" x2="448" y2="36" stroke="#C2C0B6" stroke-width="0.8" marker-end="url(#a2)"/>
+      <line x1="405" y1="62" x2="448" y2="39" stroke="#C2C0B6" stroke-width="0.8" marker-end="url(#a2)"/>
+
+      <!-- Scene graph -->
+      <rect x="450" y="22" width="80" height="28" rx="6" fill="#F1EFE8" stroke="#888780" stroke-width="0.5"/>
+      <text x="490" y="36" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#5F5E5A">Scene Graph</text>
+
+      <!-- Arrow to LLM -->
+      <line x1="531" y1="36" x2="555" y2="36" stroke="#888780" stroke-width="1" marker-end="url(#a2)"/>
+
+      <!-- LLM -->
+      <rect x="557" y="22" width="62" height="28" rx="6" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+      <text x="588" y="36" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="500" fill="#2C2C2A">LLM Loop</text>
+    </svg>
+  </div>
+</div>
+
+<script>
+const layers = [
+  {
+    n: 1, color: 'c1', name: 'Monocular visual SLAM + dense mapping',
+    tag: 'Capture & Pose', tagClass: 'c1',
+    tools: ['ORB-SLAM3', 'DROID-SLAM', 'Bundle Adj.', 'Lie Algebra SE3'],
+    desc: 'Full 6-DoF camera pose estimation from a single webcam with no IMU or depth sensor. Builds a sparse feature map and dense occupancy grid simultaneously. Loop closure detects when you return to a known location. Relocalization recovers from tracking loss.',
+    output: '→ Live metric 3D point cloud + camera trajectory'
+  },
+  {
+    n: 2, color: 'c3', name: '3D Gaussian splatting — real-time neural scene',
+    tag: '3D Representation', tagClass: 'c3',
+    tools: ['gsplat', 'CUDA rasterizer', 'Spherical Harmonics', 'Adaptive Density'],
+    desc: 'As SLAM builds the map, 3D Gaussians are initialized at sparse points. Gaussian parameters (position, covariance, opacity, SH color) are optimized continuously via differentiable tile-based rasterization. The scene becomes a photorealistic, editable neural field — not a mesh, not voxels.',
+    output: '→ Photorealistic novel view synthesis at real-time fps'
+  },
+  {
+    n: 3, color: 'c4', name: 'Foundation model semantic feature field',
+    tag: 'Semantic Grounding', tagClass: 'c4',
+    tools: ['SAM2', 'DINOv2', 'CLIP', 'OpenVocab 3D'],
+    desc: 'SAM2 provides persistent, memory-tracked segmentation masks across all frames. DINOv2 patch features are fused into 3D — every Gaussian gets a semantic feature vector. The resulting CLIP-queryable 3D feature field lets you ask "where is the coffee mug?" and get a spatial heatmap.',
+    output: '→ Language-addressable 3D scene; every point has semantic meaning'
+  },
+  {
+    n: 4, color: 'c5', name: 'Neural physics engine on Gaussian splats',
+    tag: 'Physics Simulation', tagClass: 'c5',
+    tools: ['PhysGaussian', 'MPM Solver', 'Neural Material Est.', 'Diff. Physics'],
+    desc: 'Physical material properties (rigid, elastic, plastic) are inferred from visual appearance. Objects are simulated using Material Point Method on top of Gaussians. Dynamic objects are separated from static background and modeled with learned motion priors.',
+    output: '→ Click any object → physics simulation of deformation or interaction'
+  },
+  {
+    n: 5, color: 'c2', name: 'Temporal world model + future prediction',
+    tag: 'World Modeling', tagClass: 'c2',
+    tools: ['Latent Diffusion', 'Spatiotemporal TF', 'VQ-VAE', 'Action Conditioning'],
+    desc: 'Recent frames are encoded into a latent world state. A transformer-based dynamics model predicts what the scene will look like N frames ahead. The model learns lighting changes, human motion continuations, and object interaction trajectories.',
+    output: '→ Ghost frames — predicted future of the live scene'
+  },
+  {
+    n: 6, color: 'c6', name: 'Biomechanical human digital twin',
+    tag: 'Human Reconstruction', tagClass: 'c6',
+    tools: ['SMPL-X', '4D-Humans', 'Neural Textures', 'IK Solver'],
+    desc: 'A full SMPL-X parametric body model (body + hands + face + expression, 127 parameters) is fitted to you in every frame. A textured neural avatar is reconstructed in real-time. Biomechanical forces including joint torques, center of mass, and balance stability are estimated.',
+    output: '→ Real-time 3D biomechanical twin, exportable to Blender / Unreal'
+  },
+  {
+    n: 7, color: 'c7', name: 'Neural lighting decomposition + relighting',
+    tag: 'Inverse Rendering', tagClass: 'c7',
+    tools: ['GaussianShader', 'PBR Decomp.', 'MC Path Tracing', 'Neural BRDF'],
+    desc: 'Every frame is decomposed into albedo, roughness, metallic, normals, and environment lighting. An HDR environment light map is estimated from a single image via neural inverse rendering. Virtual objects can then be inserted with physically correct shadows and reflections.',
+    output: '→ Real and virtual objects sharing the same PBR lighting model'
+  },
+  {
+    n: 8, color: 'c8', name: 'Causal scene graph + LLM reasoning loop',
+    tag: 'Symbolic Reasoning', tagClass: 'c8',
+    tools: ['GPT-4o Vision', 'Scene Graph NN', 'Temporal Logic', 'Neuro-Symbolic'],
+    desc: 'All 7 upstream layers feed a dynamic scene graph: nodes = objects/people, edges = spatial and causal relationships. Event detection tracks discrete state changes. The LLM receives the scene graph JSON + depth + semantic masks + predicted future + biomechanics and outputs a causal narrative. The loop is closed — LLM can trigger edits back into the Gaussian splat.',
+    output: '→ Real-time causal narrative of everything happening in the scene'
+  }
+];
+
+const container = document.getElementById('layers');
+layers.forEach(l => {
+  const card = document.createElement('div');
+  card.className = 'layer-card';
+  card.innerHTML = `
+    <div class="layer-header">
+      <div class="layer-num ${l.color}">${l.n}</div>
+      <div class="layer-name">${l.name}</div>
+      <span class="layer-tag ${l.tagClass}">${l.tag}</span>
+      <i class="ti ti-chevron-down layer-chevron" aria-hidden="true"></i>
+    </div>
+    <div class="layer-body">
+      <div class="tech-pills">${l.tools.map(t=>`<span class="pill">${t}</span>`).join('')}</div>
+      <div class="body-desc">${l.desc}</div>
+      <div class="body-output">${l.output}</div>
+    </div>`;
+  card.addEventListener('click', () => {
+    const wasActive = card.classList.contains('active');
+    document.querySelectorAll('.layer-card').forEach(c => c.classList.remove('active'));
+    if (!wasActive) card.classList.add('active');
+  });
+  container.appendChild(card);
+});
+</script>
