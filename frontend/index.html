@@ -178,6 +178,9 @@
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.position.set(5, 10, 5);
         scene.add(dirLight);
+        const fillLight = new THREE.DirectionalLight(0x5bd2ff, 0.3);
+        fillLight.position.set(-5, 3, -5);
+        scene.add(fillLight);
         
         // Grid
         scene.add(new THREE.GridHelper(20, 20, 0x1f4372, 0x142442));
@@ -321,12 +324,39 @@
                 const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
                 
                 if (!objectMeshes.has(id)) {
-                    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
-                    const mat = new THREE.MeshStandardMaterial({ color: color, transparent: true, opacity: 0.8 });
+                    // Solid box with color
+                    const geo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                    const mat = new THREE.MeshStandardMaterial({ 
+                        color: color, 
+                        transparent: false, 
+                        opacity: 1,
+                        metalness: 0.2,
+                        roughness: 0.5
+                    });
                     const mesh = new THREE.Mesh(geo, mat);
                     mesh.userData.id = id;
                     scene.add(mesh);
                     objectMeshes.set(id, mesh);
+                    
+                    // Wireframe outline
+                    const wireGeo = new THREE.BoxGeometry(0.52, 0.52, 0.52);
+                    const wireMat = new THREE.MeshBasicMaterial({ 
+                        color: 0x5bd2ff, 
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+                    wireMesh.userData.wireframeFor = id;
+                    mesh.add(wireMesh);
+                    
+                    // Label above the box
+                    const labelGeo = new THREE.SphereGeometry(0.05, 8, 8);
+                    const labelMat = new THREE.MeshBasicMaterial({ color: color });
+                    const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+                    labelMesh.position.y = 0.4;
+                    mesh.add(labelMesh);
+                    
                     addPoints(p.bbox, depth, color);
                 }
                 
@@ -409,6 +439,14 @@
             document.getElementById("scene-info").textContent = "0 objects";
             objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
         }
+        
+        // Add floor plane
+        const floorGeo = new THREE.PlaneGeometry(20, 20);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a1428, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        scene.add(floor);
         
         // Events
         document.getElementById("start-btn").addEventListener("click", function() { stream ? stopCamera() : startCamera(); });
