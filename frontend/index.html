@@ -313,6 +313,7 @@
         // Update 3D
         function update3DScene(preds) {
             const existing = new Set(objectMeshes.keys());
+            console.log("Updating 3D scene with", preds.length, "predictions");
             
             preds.forEach((p, i) => {
                 const id = p.class + "_" + i;
@@ -321,47 +322,54 @@
                 const area = (p.bbox[2] * p.bbox[3]) / (640 * 480);
                 const depth = Math.max(1, 8 - area * 15);
                 const hue = (p.class.charCodeAt(0) * 17) % 360 / 360;
-                const color = new THREE.Color().setHSL(hue, 0.7, 0.5);
+                const color = new THREE.Color().setHSL(hue, 0.9, 0.5); // More saturated
                 
                 if (!objectMeshes.has(id)) {
-                    // Solid box with color
-                    const geo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                    console.log("Creating box for:", p.class, "at depth:", depth);
+                    
+                    // Large solid box with emissive glow
+                    const geo = new THREE.BoxGeometry(1, 1, 1); // Much larger
                     const mat = new THREE.MeshStandardMaterial({ 
                         color: color, 
                         transparent: false, 
                         opacity: 1,
-                        metalness: 0.2,
-                        roughness: 0.5
+                        emissive: color,
+                        emissiveIntensity: 0.3,
+                        metalness: 0.1,
+                        roughness: 0.3
                     });
                     const mesh = new THREE.Mesh(geo, mat);
                     mesh.userData.id = id;
+                    mesh.userData.label = p.class;
                     scene.add(mesh);
                     objectMeshes.set(id, mesh);
                     
-                    // Wireframe outline
-                    const wireGeo = new THREE.BoxGeometry(0.52, 0.52, 0.52);
+                    // Bright wireframe
+                    const wireGeo = new THREE.BoxGeometry(1.05, 1.05, 1.05);
                     const wireMat = new THREE.MeshBasicMaterial({ 
-                        color: 0x5bd2ff, 
-                        wireframe: true,
-                        transparent: true,
-                        opacity: 0.8
+                        color: 0xffffff, 
+                        wireframe: true
                     });
                     const wireMesh = new THREE.Mesh(wireGeo, wireMat);
-                    wireMesh.userData.wireframeFor = id;
                     mesh.add(wireMesh);
                     
-                    // Label above the box
-                    const labelGeo = new THREE.SphereGeometry(0.05, 8, 8);
-                    const labelMat = new THREE.MeshBasicMaterial({ color: color });
-                    const labelMesh = new THREE.Mesh(labelGeo, labelMat);
-                    labelMesh.position.y = 0.4;
-                    mesh.add(labelMesh);
+                    // Tall pole to floor (so you can see where it connects)
+                    const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 2, 8);
+                    const poleMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.5 });
+                    const poleMesh = new THREE.Mesh(poleGeo, poleMat);
+                    poleMesh.position.y = -1;
+                    mesh.add(poleMesh);
                     
                     addPoints(p.bbox, depth, color);
                 }
                 
+                // Position the box - closer = more to the right, depth = z
+                const x = (p.bbox[0] + p.bbox[2]/2) / 640 * 8 - 4; // Wider range
+                const z = -depth * 0.5 + 4; // Map depth to z
+                console.log("Position:", id, "x:", x, "z:", z);
+                
                 const mesh = objectMeshes.get(id);
-                mesh.position.set((p.bbox[0] + p.bbox[2]/2) / 640 * 10 - 5, 0.5, -depth + 5);
+                mesh.position.set(x, 0.5, z);
             });
             
             existing.forEach(id => {
@@ -371,6 +379,8 @@
                 m.material.dispose();
                 objectMeshes.delete(id);
             });
+            
+            console.log("Total objects in scene:", objectMeshes.size);
         }
         
         // Add points
@@ -454,6 +464,51 @@
         
         // Init
         loadModel();
+        
+        // Create demo objects to show 3D view is working
+        function createDemoScene() {
+            console.log("Creating demo scene...");
+            
+            // Create 3 demo boxes
+            const demoData = [
+                { x: -3, y: 0.5, z: 2, color: new THREE.Color().setHSL(0.55, 0.8, 0.5) },  // blue
+                { x: 0, y: 0.5, z: 0, color: new THREE.Color().setHSL(0.33, 0.8, 0.5) },   // green
+                { x: 3, y: 0.5, z: -2, color: new THREE.Color().setHSL(0.66, 0.8, 0.5) }   // purple
+            ];
+            
+            demoData.forEach((d, i) => {
+                const geo = new THREE.BoxGeometry(1, 1, 1);
+                const mat = new THREE.MeshStandardMaterial({ 
+                    color: d.color, 
+                    emissive: d.color,
+                    emissiveIntensity: 0.2,
+                    metalness: 0.1,
+                    roughness: 0.3
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(d.x, d.y, d.z);
+                mesh.userData.id = "demo_" + i;
+                scene.add(mesh);
+                objectMeshes.set("demo_" + i, mesh);
+                
+                // Wireframe
+                const wireGeo = new THREE.BoxGeometry(1.05, 1.05, 1.05);
+                const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+                mesh.add(new THREE.Mesh(wireGeo, wireMat));
+                
+                // Pole
+                const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 2, 8);
+                const poleMat = new THREE.MeshBasicMaterial({ color: d.color, transparent: true, opacity: 0.5 });
+                const poleMesh = new THREE.Mesh(poleGeo, poleMat);
+                poleMesh.position.y = -1;
+                mesh.add(poleMesh);
+            });
+            
+            console.log("Demo scene created with", objectMeshes.size, "objects");
+            updateStats([]);
+        }
+        
+        createDemoScene();
         console.log("AXIS: Ready!");
     </script>
 </body>
