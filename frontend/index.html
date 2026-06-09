@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AXIS - Adaptive eXtended Intelligence System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --text-primary: #e0e0e8;
+            --text-secondary: #8888a0;
+            --accent: #00d4ff;
+            --accent-secondary: #7b61ff;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4466;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr 200px;
+            height: 100vh;
+            gap: 1px;
+            background: var(--bg-secondary);
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--bg-tertiary);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.warning { background: var(--warning); }
+        .status-dot.error { background: var(--error); }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        /* Search Panel */
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-btn {
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: var(--bg-primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .search-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Object List */
+        .object-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .object-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .object-item:hover {
+            background: #252535;
+        }
+
+        .object-item.selected {
+            border: 1px solid var(--accent);
+        }
+
+        .object-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .object-info {
+            flex: 1;
+        }
+
+        .object-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .object-position {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Viewport */
+        .viewport {
+            background: var(--bg-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        .viewport-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .overlay-btn {
+            background: rgba(18, 18, 26, 0.9);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .overlay-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Camera Feed */
+        .camera-feed {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            width: 240px;
+            height: 180px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--bg-tertiary);
+        }
+
+        .camera-feed video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-label {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            background: var(--bg-secondary);
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        /* LLM Query */
+        .query-section {
+            margin-bottom: 24px;
+        }
+
+        .query-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            min-height: 80px;
+            transition: border-color 0.2s;
+        }
+
+        .query-input:focus {
+            border-color: var(--accent);
+        }
+
+        .query-submit {
+            margin-top: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .query-submit:hover {
+            opacity: 0.9;
+        }
+
+        /* Response Area */
+        .response-area {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            min-height: 100px;
+        }
+
+        .response-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            padding: 16px;
+            gap: 16px;
+        }
+
+        .panel-section {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .panel-title {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        /* Trajectory View */
+        .trajectory-chart {
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+        }
+
+        .trajectory-bar {
+            flex: 1;
+            background: var(--accent);
+            opacity: 0.6;
+            border-radius: 2px 2px 0 0;
+            transition: opacity 0.2s;
+        }
+
+        .trajectory-bar:hover {
+            opacity: 1;
+        }
+
+        /* Event List */
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+            max-height: 140px;
+        }
+
+        .event-item {
+            font-size: 12px;
+            padding: 6px 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .event-time {
+            color: var(--text-secondary);
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--bg-tertiary);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr 200px;
+            }
+            .sidebar, .right-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">AX</div>
+                <span class="logo-text">AXIS</span>
+            </div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot" id="camera-status"></div>
+                    <span>Camera</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="slam-status"></div>
+                    <span>SLAM</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="llm-status"></div>
+                    <span>LLM</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="section-title">Semantic Search</div>
+                <div class="search-box">
+                    <input type="text" class="search-input" id="search-input" placeholder="Find object...">
+                    <button class="search-btn" onclick="searchObjects()">Search</button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Detected Objects</div>
+                <div class="object-list" id="object-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>Loading objects...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Scene Graph</div>
+                <div id="scene-graph" style="font-size: 12px; color: var(--text-secondary);">
+                    No relationships detected
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport -->
+        <main class="viewport">
+            <div id="canvas-container"></div>
+            <div class="viewport-overlay">
+                <button class="overlay-btn" onclick="toggleCamera()">
+                    <span>📷</span> Toggle Camera
+                </button>
+                <button class="overlay-btn" onclick="resetView()">
+                    <span>🔄</span> Reset View
+                </button>
+                <button class="overlay-btn" onclick="toggleLabels()">
+                    <span>🏷️</span> Toggle Labels
+                </button>
+            </div>
+            <div class="camera-feed">
+                <video id="video-feed" autoplay muted></video>
+                <div class="camera-label">Live Feed</div>
+            </div>
+        </main>
+
+        <!-- Right Panel -->
+        <aside class="right-panel">
+            <div class="query-section">
+                <div class="section-title">Ask AXIS</div>
+                <textarea class="query-input" id="query-input" placeholder="Ask about the scene..."></textarea>
+                <button class="query-submit" onclick="submitQuery()">Ask</button>
+                <div class="response-area">
+                    <div class="response-text" id="response-text">
+                        Ask a question about the scene to get started...
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Statistics</div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="map-points">0</div>
+                        <div class="stat-label">Map Points</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="objects-count">0</div>
+                        <div class="stat-label">Objects</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="keyframes-count">0</div>
+                        <div class="stat-label">Keyframes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="fps-display">0</div>
+                        <div class="stat-label">FPS</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="section-title">Human Tracking</div>
+                <div id="human-list" style="font-size: 13px; color: var(--text-secondary);">
+                    No humans detected
+                </div>
+            </div>
+        </aside>
+
+        <!-- Bottom Panel -->
+        <footer class="bottom-panel">
+            <div class="panel-section">
+                <div class="panel-title">Camera Trajectory</div>
+                <div class="trajectory-chart" id="trajectory-chart"></div>
+            </div>
+            <div class="panel-section">
+                <div class="panel-title">Prediction</div>
+                <div id="prediction-view" style="font-size: 12px;">
+                    No predictions yet
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="panel-title">Physics</div>
+                <div id="physics-view" style="font-size: 12px;">
+                    Click object to simulate
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="panel-title">Recent Events</div>
+                <div class="event-list" id="event-list">
+                    <div class="event-item">
+                        <span>System initialized</span>
+                        <span class="event-time">Now</span>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-section">
+                <div class="panel-title">System Health</div>
+                <div id="system-health" style="font-size: 12px;">
+                    <div>CPU: <span id="cpu-usage">0%</span></div>
+                    <div>Memory: <span id="mem-usage">0%</span></div>
+                    <div>GPU: <span id="gpu-usage">N/A</span></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Three.js and Application Script -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+        // AXIS Application
+        class AXISApp {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.pointCloud = null;
+                this.labels = [];
+                this.showLabels = true;
+                this.ws = null;
+                this.fps = 0;
+                this.frameCount = 0;
+                this.lastFpsUpdate = Date.now();
+
+                this.init();
+                this.connectWebSocket();
+                this.animate();
+            }
+
+            init() {
+                const container = document.getElementById('canvas-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0a0a0f);
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+                this.camera.position.set(0, 2, 5);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(width, height);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                container.appendChild(this.renderer.domElement);
+
+                // Controls
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(5, 10, 5);
+                this.scene.add(directionalLight);
+
+                // Grid
+                const gridHelper = new THREE.GridHelper(20, 20, 0x303040, 0x202030);
+                this.scene.add(gridHelper);
+
+                // Axes
+                const axesHelper = new THREE.AxesHelper(2);
+                this.scene.add(axesHelper);
+
+                // Point cloud placeholder
+                this.initPointCloud();
+
+                // Resize handler
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            initPointCloud() {
+                // Create placeholder point cloud
+                const geometry = new THREE.BufferGeometry();
+                const points = new Float32Array(1000 * 3);
+                
+                for (let i = 0; i < points.length; i++) {
+                    points[i] = (Math.random() - 0.5) * 10;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+
+                const material = new THREE.PointsMaterial({
+                    color: 0x00d4ff,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.pointCloud = new THREE.Points(geometry, material);
+                this.scene.add(this.pointCloud);
+            }
+
+            updatePointCloud(positions, colors) {
+                if (!this.pointCloud) return;
+
+                const geometry = new THREE.BufferGeometry();
+                const points = new Float32Array(positions.length * 3);
+                
+                for (let i = 0; i < positions.length; i++) {
+                    points[i * 3] = positions[i].x || positions[i][0];
+                    points[i * 3 + 1] = positions[i].y || positions[i][1];
+                    points[i * 3 + 2] = positions[i].z || positions[i][2];
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+
+                this.scene.remove(this.pointCloud);
+                
+                const material = new THREE.PointsMaterial({
+                    color: 0x00d4ff,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.8
+                });
+
+                this.pointCloud = new THREE.Points(geometry, material);
+                this.scene.add(this.pointCloud);
+            }
+
+            addObjectLabel(position, text, color = 0x00d4ff) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.font = '24px Arial';
+                ctx.fillStyle = '#00d4ff';
+                ctx.fillText(text, 0, 24);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                
+                sprite.position.copy(position);
+                sprite.scale.set(1, 0.5, 1);
+
+                this.scene.add(sprite);
+                this.labels.push(sprite);
+            }
+
+            connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/scene`;
+
+                try {
+                    this.ws = new WebSocket(wsUrl);
+                    
+                    this.ws.onopen = () => {
+                        console.log('WebSocket connected');
+                        this.updateStatus('camera', 'connected');
+                        this.ws.send(JSON.stringify({ command: 'get_state' }));
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    };
+
+                    this.ws.onerror = (error) => {
+                        console.log('WebSocket error (server may not be running)');
+                        this.updateStatus('camera', 'error');
+                    };
+
+                    this.ws.onclose = () => {
+                        console.log('WebSocket closed');
+                        setTimeout(() => this.connectWebSocket(), 5000);
+                    };
+                } catch (e) {
+                    console.log('WebSocket not available');
+                }
+            }
+
+            handleMessage(data) {
+                if (data.type === 'state') {
+                    this.updateState(data);
+                } else if (data.type === 'search_results') {
+                    this.displaySearchResults(data.results);
+                } else if (data.type === 'llm_response') {
+                    this.displayResponse(data.response);
+                }
+            }
+
+            updateState(state) {
+                document.getElementById('map-points').textContent = state.map_points || 0;
+                document.getElementById('objects-count').textContent = state.semantic_objects || 0;
+                document.getElementById('keyframes-count').textContent = state.keyframes || 0;
+                
+                this.updateStatus('slam', state.slam_state === 'tracking' ? 'connected' : 'warning');
+            }
+
+            displaySearchResults(results) {
+                const list = document.getElementById('object-list');
+                if (results.length === 0) {
+                    list.innerHTML = '<div style="color: var(--text-secondary);">No results found</div>';
+                    return;
+                }
+
+                list.innerHTML = results.map(r => `
+                    <div class="object-item" onclick="selectObject('${r.object_id}')">
+                        <div class="object-icon">📦</div>
+                        <div class="object-info">
+                            <div class="object-name">${r.class_name}</div>
+                            <div class="object-position">${r.position.x.toFixed(1)}, ${r.position.y.toFixed(1)}, ${r.position.z.toFixed(1)}</div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--accent);">${Math.round(r.similarity * 100)}%</div>
+                    </div>
+                `).join('');
+            }
+
+            displayResponse(response) {
+                document.getElementById('response-text').textContent = response || 'No response';
+            }
+
+            updateStatus(element, status) {
+                const el = document.getElementById(`${element}-status`);
+                el.className = 'status-dot';
+                if (status === 'error') el.classList.add('error');
+                else if (status === 'warning') el.classList.add('warning');
+            }
+
+            onResize() {
+                const container = document.getElementById('canvas-container');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+
+                // FPS counter
+                this.frameCount++;
+                const now = Date.now();
+                if (now - this.lastFpsUpdate >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                    document.getElementById('fps-display').textContent = this.fps;
+                }
+            }
+        }
+
+        // Global functions
+        let app;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            app = new AXISApp();
+            initCamera();
+        });
+
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                document.getElementById('video-feed').srcObject = stream;
+                app.updateStatus('camera', 'connected');
+            } catch (e) {
+                console.log('Camera not available');
+            }
+        }
+
+        function toggleCamera() {
+            const video = document.getElementById('video-feed');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            } else {
+                initCamera();
+            }
+        }
+
+        function resetView() {
+            app.camera.position.set(0, 2, 5);
+            app.controls.reset();
+        }
+
+        function toggleLabels() {
+            app.showLabels = !app.showLabels;
+            app.labels.forEach(label => label.visible = app.showLabels);
+        }
+
+        async function searchObjects() {
+            const query = document.getElementById('search-input').value;
+            if (!query || !app.ws) return;
+
+            app.ws.send(JSON.stringify({
+                command: 'search',
+                query: query
+            }));
+        }
+
+        async function submitQuery() {
+            const question = document.getElementById('query-input').value;
+            if (!question || !app.ws) return;
+
+            app.ws.send(JSON.stringify({
+                command: 'query',
+                question: question
+            }));
+        }
+
+        function selectObject(objectId) {
+            console.log('Selected:', objectId);
+            // Highlight object in 3D view
+        }
+    </script>
+</body>
+</html>
