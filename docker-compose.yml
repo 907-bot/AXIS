@@ -1,0 +1,56 @@
+# Docker Compose for AXIS
+version: '3.8'
+
+services:
+  axis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: axis-server
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=INFO
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: PostgreSQL for persistent storage
+  postgres:
+    image: postgres:15-alpine
+    container_name: axis-postgres
+    environment:
+      POSTGRES_DB: axis
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Optional: Qdrant for vector search
+  qdrant:
+    image: qdrant/qdrant:v1.7.0
+    container_name: axis-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:

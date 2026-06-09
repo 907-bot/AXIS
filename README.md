@@ -2,6 +2,47 @@
 
 AXIS is a research-grade embodied AI platform that transforms a standard webcam into a real-time world modeling system capable of understanding 3D environments, building semantic scene representations, tracking humans and objects, predicting future events, and enabling natural language reasoning over the real world.
 
+## Quick Start with Docker
+
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+
+# Open the application
+open http://localhost:8000
+```
+
+## Docker Commands
+
+```bash
+# Build image
+make build
+
+# Run container
+make start
+
+# View logs
+make logs
+
+# Stop container
+make stop
+
+# Shell into container
+make shell
+```
+
+## Manual Installation
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start backend
+PYTHONPATH=/workspace/project/AXIS python -m uvicorn backend.api.server:app --host 0.0.0.0 --port 8000
+
+# Open http://localhost:8000
+```
+
 ## Project Structure
 
 ```
@@ -9,71 +50,38 @@ AXIS/
 ├── backend/           # Python backend
 │   ├── api/          # FastAPI endpoints
 │   ├── core/         # Core utilities (camera, types)
-│   ├── slam/         # Visual SLAM (DROID-SLAM)
-│   ├── cv/           # Computer vision (SAM2, CLIP, DINO)
 │   ├── scene/        # Scene representation (semantic map, graph)
-│   ├── human/        # Human tracking (4D-Humans, SMPL-X)
-│   ├── prediction/   # Future prediction
-│   ├── physics/      # Physics simulation (MuJoCo)
-│   ├── graph/        # Graph database (Neo4j)
-│   └── llm/          # LLM reasoning (LangGraph)
-├── frontend/         # Web dashboard
+│   └── ...
+├── frontend/         # Web dashboard (Three.js)
 ├── config/           # Configuration
-├── scripts/          # Utility scripts
-├── data/             # Data storage
-├── models/           # Model checkpoints
 ├── tests/            # Unit tests
-├── requirements.txt  # Python dependencies
-└── main.md          # Full specification
+├── Dockerfile        # Docker configuration
+├── docker-compose.yml # Docker Compose
+├── Makefile          # Docker commands
+└── requirements.txt  # Python dependencies
 ```
 
-## Installation
+## Features
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+- **Webcam ingestion** with browser-based TensorFlow.js COCO-SSD
+- **Real-time object detection** and tracking
+- **Semantic search** across detected objects
+- **3D scene viewer** with Three.js
+- **Scene graph** with spatial relationships
+- **Natural language Q&A** about the scene
+- **WebSocket** real-time sync
 
-# Create environment file
-cp .env.example .env
+## API Endpoints
 
-# Start backend
-python backend/main.py
-
-# Open frontend
-open frontend/index.html
-```
-
-## API
-
-### REST Endpoints
-
-- `GET /` - Health check
-- `GET /state` - Get system state
-- `POST /camera/start` - Start camera
-- `POST /camera/stop` - Stop camera
-- `POST /search` - Semantic object search
-- `POST /query` - LLM query
-- `GET /trajectory` - Camera trajectory
-- `GET /map/points` - 3D map points
-- `GET /semantic/objects` - Semantic objects
-
-### WebSocket
-
-Connect to `/ws/{channel}` for real-time updates:
-- `camera` - Camera frames
-- `scene` - Scene updates
-- `human` - Human tracking
-- `prediction` - Future predictions
-
-## Phases
-
-1. **Spatial Intelligence MVP** - 3D reconstruction with semantic search
-2. **Neural Scene Representation** - Gaussian Splatting
-3. **Human Digital Twin** - Full-body avatar
-4. **World Model Prediction** - Future state forecasting
-5. **Physics Engine** - Interaction simulation
-6. **Scene Graph Intelligence** - Symbolic knowledge
-7. **LLM Reasoning Layer** - Natural language understanding
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Frontend UI |
+| `/health` | GET | Health check |
+| `/state` | GET | Current scene state |
+| `/scene/update` | POST | Update with detections |
+| `/search` | POST | Semantic object search |
+| `/query` | POST | Ask questions |
+| `/ws/scene` | WS | WebSocket for real-time updates |
 
 ## License
 
