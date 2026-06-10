@@ -36,6 +36,17 @@ class Vector3:
             return self * (1.0 / mag)
         return Vector3()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Vector3):
+            return NotImplemented
+        return abs(self.x - other.x) < 1e-9 and abs(self.y - other.y) < 1e-9 and abs(self.z - other.z) < 1e-9
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y, self.z))
+
+    def to_dict(self) -> Dict[str, float]:
+        return {"x": self.x, "y": self.y, "z": self.z}
+
 
 @dataclass
 class Quaternion:

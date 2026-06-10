@@ -1,5 +1,6 @@
 """Scene graph for representing object relationships."""
 from dataclasses import dataclass, field
+from collections import deque
 from typing import List, Dict, Optional, Set, Tuple, Any
 from enum import Enum
 from datetime import datetime
@@ -50,8 +51,8 @@ class SceneNode:
     incoming_edges: Set[str] = field(default_factory=set)
     
     # Temporal
-    created_at: float = field(default_factory=datetime.now().timestamp)
-    updated_at: float = field(default_factory=datetime.now().timestamp)
+    created_at: float = field(default_factory=lambda: datetime.now().timestamp())
+    updated_at: float = field(default_factory=lambda: datetime.now().timestamp())
 
     def add_property(self, key: str, value: Any):
         """Add/update property."""
@@ -73,8 +74,8 @@ class SceneEdge:
     
     # Confidence and temporal info
     confidence: float = 1.0
-    first_observed: float = field(default_factory=datetime.now().timestamp)
-    last_observed: float = field(default_factory=datetime.now().timestamp)
+    first_observed: float = field(default_factory=lambda: datetime.now().timestamp())
+    last_observed: float = field(default_factory=lambda: datetime.now().timestamp())
     
     # Optional properties
     properties: Dict[str, Any] = field(default_factory=dict)
@@ -99,7 +100,6 @@ class SceneGraph:
     def __init__(self):
         self.nodes: Dict[str, SceneNode] = {}
         self.edges: Dict[str, SceneEdge] = {}
-        self._edge_index: Dict[Tuple[str, str, RelationType], str] = {}
 
     def add_node(
         self,
@@ -152,7 +152,6 @@ class SceneGraph:
         self.edges[edge_id] = edge
         self.nodes[source_id].outgoing_edges.add(edge_id)
         self.nodes[target_id].incoming_edges.add(edge_id)
-        self._edge_index[(source_id, target_id, relation)] = edge_id
 
         logger.debug(f"Added edge: {source_id} --[{relation.value}]--> {target_id}")
         return edge
@@ -239,11 +238,11 @@ class SceneGraph:
             return [source_id]
 
         # BFS
-        queue = [(source_id, [source_id])]
+        queue = deque([(source_id, [source_id])])
         visited = {source_id}
 
         while queue:
-            current, path = queue.pop(0)
+            current, path = queue.popleft()
             
             for edge_id in self.nodes[current].outgoing_edges:
                 edge = self.edges.get(edge_id)

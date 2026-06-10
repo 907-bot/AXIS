@@ -8,20 +8,13 @@ from loguru import logger
 @dataclass
 class BodyParameters:
     """SMPL-X body model parameters."""
-    # Shape parameters (10 beta)
     betas: np.ndarray  # (10,)
-    
-    # Pose parameters (55 body + 30 hands = 85)
     body_pose: np.ndarray  # (55,) - body joint angles
     left_hand_pose: np.ndarray  # (15,) - left hand joints
     right_hand_pose: np.ndarray  # (15,) - right hand joints
-    jaw_pose: Optional[np.ndarray] = None  # (1,) - jaw
-    
-    # Global translation and rotation
     global_translation: np.ndarray  # (3,)
     global_rotation: np.ndarray  # (3,) - axis-angle
-    
-    # Expression (if using SMPL-X)
+    jaw_pose: Optional[np.ndarray] = None  # (1,) - jaw
     expression: Optional[np.ndarray] = None  # (10,)
 
     def to_dict(self) -> Dict[str, Any]:

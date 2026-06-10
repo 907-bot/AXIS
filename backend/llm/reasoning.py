@@ -147,7 +147,8 @@ class LLMAgent:
             self.llm = ChatOpenAI(
                 model=self.model_name,
                 temperature=self.temperature,
-                api_key=api_key
+                api_key=api_key,
+                request_timeout=30,
             )
             self.scene_analyzer = SceneAnalyzer(self.llm)
             logger.info(f"LLM Agent initialized with {self.model_name}")

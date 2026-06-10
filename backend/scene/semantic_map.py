@@ -94,6 +94,9 @@ class SemanticMap:
         confidence: float = 1.0
     ) -> MapObject:
         """Add new object to map."""
+        if len(self.objects) >= self.max_objects:
+            oldest = min(self.objects.keys(), key=lambda k: self.objects[k].last_observed)
+            self.remove_object(oldest)
         obj = MapObject(
             object_id=object_id,
             class_name=class_name,

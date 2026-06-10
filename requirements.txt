@@ -4,13 +4,12 @@ uvicorn[standard]==0.27.0
 pydantic==2.5.3
 pydantic-settings==2.1.0
 
-# PyTorch & CUDA
-torch>=2.1.0
-torchvision>=0.16.0
-torchaudio>=2.1.0
+# PyTorch & CUDA (unused on server — ML runs in browser; uncomment if server-side inference needed)
+# torch>=2.1.0
+# torchvision>=0.16.0
+# torchaudio>=2.1.0
 
 # Computer Vision
-opencv-python==4.9.0.80
 opencv-python-headless==4.9.0.80
 open3d==0.18.0
 scikit-image==0.22.0
@@ -54,6 +53,15 @@ loguru==0.7.2
 python-dotenv==1.0.0
 tqdm==4.66.1
 click==8.1.7
+
+# CLIP semantic embeddings (CPU)
+sentence-transformers>=2.2.0
+
+# MuJoCo physics
+mujoco>=3.1.0
+
+# Kafka event streaming
+kafka-python>=2.0.2
 
 # Testing
 pytest==7.4.4

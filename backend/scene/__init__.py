@@ -2,6 +2,8 @@
 from .scene_graph import SceneGraph, SceneNode, SceneEdge
 from .semantic_map import SemanticMap, MapObject
 from .search import SemanticSearch, SearchResult
+from .gaussian_map import GaussianMap, SemanticGaussian
+from .intelligence import SceneIntelligence, SymbolicEvent, Interaction
 
 __all__ = [
     "SceneGraph",
@@ -10,5 +12,10 @@ __all__ = [
     "SemanticMap",
     "MapObject",
     "SemanticSearch",
-    "SearchResult"
+    "SearchResult",
+    "GaussianMap",
+    "SemanticGaussian",
+    "SceneIntelligence",
+    "SymbolicEvent",
+    "Interaction",
 ]

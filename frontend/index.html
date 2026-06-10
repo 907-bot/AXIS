@@ -75,13 +75,21 @@
         .toast.error { background: #441a1a; border: 1px solid #721f1f; color: #ff7c7c; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+        .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #142442; font-size: 12px; }
+        .metric-row:last-child { border-bottom: none; }
+        .metric-label { color: #7c82ff; }
+        .metric-value { color: #5bd2ff; font-weight: 600; }
+        .human-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; margin-left: 6px; }
+        .human-badge.moving { background: #1a3a2a; color: #4ade80; }
+        .human-badge.still { background: #1a2744; color: #7c82ff; }
+        .skeleton-2d { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="header">
         <div>
-            <h1>AXIS - 3D Scene Builder</h1>
-            <p>Real-time camera-based 3D scene reconstruction</p>
+            <h1>AXIS — Neural Scene Viewer</h1>
+            <p style="font-size:12px;">Phase 2: Real-time Gaussian Splatting + Semantic Feature Fusion</p>
         </div>
         <div class="header-right">
             <div class="backend-status">
@@ -143,20 +151,19 @@
                 </div>
                 <div class="query-response" id="query-response">Ask a question about the scene...</div>
             </div>
-        </div>
-
-        <div class="right-panel">
-            <div class="panel">
                 <div class="panel-head">
-                    <h3>3D Scene View</h3>
-                    <span style="font-size:12px;color:#7c82ff;" id="scene-info">0 objects mapped</span>
+                    <h3>Neural 3D Scene <span style="font-size:10px;color:#7c82ff;font-weight:normal;">(Gaussian Splats)</span></h3>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button class="secondary" id="export-btn" style="padding:6px 12px;font-size:11px;">Export</button>
+                        <span style="font-size:12px;color:#7c82ff;" id="scene-info">0 gaussians</span>
+                    </div>
                 </div>
-                <div class="panel-body">
+                <div class="panel-body" style="padding:12px;">
                     <div id="three-container">
                         <canvas id="three-canvas"></canvas>
                         <div class="loading-3d" id="loading-3d">
                             <div class="spinner"></div>
-                            <div>Initializing 3D Scene...</div>
+                            <div>Initializing Neural Scene...</div>
                         </div>
                     </div>
                 </div>
@@ -169,6 +176,132 @@
                 <div class="panel-body">
                     <div id="events-list" style="font-size:12px;color:#7c82ff;max-height:120px;overflow-y:auto;padding-right:8px;">
                         <div>Waiting for events...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Human Digital Twin <span style="font-size:10px;color:#7c82ff;font-weight:normal;">Pose &amp; Analytics</span></h3>
+                </div>
+                <div class="panel-body" id="human-panel-body">
+                    <div id="human-status" style="font-size:12px;color:#7c82ff;margin-bottom:8px;">No person detected</div>
+                    <div id="human-metrics" style="display:none;">
+                        <div class="metric-row"><span class="metric-label">Balance</span><span class="metric-value" id="h-balance">0.00</span></div>
+                        <div class="metric-row"><span class="metric-label">Stability</span><span class="metric-value" id="h-stability">0.00</span></div>
+                        <div class="metric-row"><span class="metric-label">Speed</span><span class="metric-value" id="h-speed">0.00 m/s</span></div>
+                        <div class="metric-row"><span class="metric-label">Left Elbow</span><span class="metric-value" id="h-l-elbow">--</span></div>
+                        <div class="metric-row"><span class="metric-label">Right Elbow</span><span class="metric-value" id="h-r-elbow">--</span></div>
+                        <div class="metric-row"><span class="metric-label">Left Knee</span><span class="metric-value" id="h-l-knee">--</span></div>
+                        <div class="metric-row"><span class="metric-label">Right Knee</span><span class="metric-value" id="h-r-knee">--</span></div>
+                        <div class="metric-row"><span class="metric-label">Motion</span><span class="metric-value" id="h-motion">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Future Prediction <span style="font-size:10px;color:#7c82ff;font-weight:normal;">World Model</span></h3>
+                    <div style="display:flex;gap:4px;">
+                        <button class="pred-timeline-btn active" data-sec="0" style="padding:4px 10px;font-size:11px;border:none;border-radius:4px;cursor:pointer;background:#5bd2ff;color:#0a0f1a;font-weight:600;">Now</button>
+                        <button class="pred-timeline-btn" data-sec="1" style="padding:4px 10px;font-size:11px;border:none;border-radius:4px;cursor:pointer;background:#1a2744;color:#7c82ff;">+1s</button>
+                        <button class="pred-timeline-btn" data-sec="3" style="padding:4px 10px;font-size:11px;border:none;border-radius:4px;cursor:pointer;background:#1a2744;color:#7c82ff;">+3s</button>
+                        <button class="pred-timeline-btn" data-sec="5" style="padding:4px 10px;font-size:11px;border:none;border-radius:4px;cursor:pointer;background:#1a2744;color:#7c82ff;">+5s</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="prediction-panel-body">
+                    <div style="font-size:12px;color:#7c82ff;display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>Action: <strong id="pred-action" style="color:#5bd2ff;">--</strong></span>
+                        <span>Confidence: <strong id="pred-confidence" style="color:#5bd2ff;">--</strong></span>
+                    </div>
+                    <div id="prediction-metrics" style="display:block;">
+                        <div class="metric-row"><span class="metric-label">Tracked Objects</span><span class="metric-value" id="pred-tracked">0</span></div>
+                        <div class="metric-row"><span class="metric-label">Pose Frames</span><span class="metric-value" id="pred-frames">0</span></div>
+                        <div class="metric-row"><span class="metric-label">Predicted @ <span id="pred-sec-label">now</span></span><span class="metric-value" id="pred-count">0 objects</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Physics Sandbox <span style="font-size:10px;color:#7c82ff;font-weight:normal;">Simulation</span></h3>
+                    <div style="display:flex;gap:4px;">
+                        <button class="secondary" id="physics-init-btn" style="padding:4px 10px;font-size:11px;">Init</button>
+                        <button class="secondary" id="physics-step-btn" style="padding:4px 10px;font-size:11px;">Step</button>
+                        <button class="secondary" id="physics-reset-btn" style="padding:4px 10px;font-size:11px;">Reset</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="physics-panel-body">
+                    <div style="font-size:12px;color:#7c82ff;display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>Body: <strong id="physics-body" style="color:#5bd2ff;">--</strong></span>
+                        <span>Mass: <strong id="physics-mass" style="color:#5bd2ff;">--</strong></span>
+                    </div>
+                    <div id="physics-target-row" style="margin-bottom:8px;">
+                        <label style="font-size:11px;color:#7c82ff;">Target object:</label>
+                        <select id="physics-target" style="width:100%;padding:6px;background:#08101f;border:1px solid #1f4372;border-radius:4px;color:#e9efff;font-size:12px;margin-top:4px;">
+                            <option value="">--select--</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;">
+                        <button class="physics-force-btn" data-dir="forward" style="padding:6px 12px;font-size:11px;background:#1a3a5c;border:none;border-radius:4px;color:#e9efff;cursor:pointer;">Push ⟵</button>
+                        <button class="physics-force-btn" data-dir="backward" style="padding:6px 12px;font-size:11px;background:#1a3a5c;border:none;border-radius:4px;color:#e9efff;cursor:pointer;">Push ⟶</button>
+                        <button class="physics-force-btn" data-dir="left" style="padding:6px 12px;font-size:11px;background:#1a3a5c;border:none;border-radius:4px;color:#e9efff;cursor:pointer;">Push ↑</button>
+                        <button class="physics-force-btn" data-dir="right" style="padding:6px 12px;font-size:11px;background:#1a3a5c;border:none;border-radius:4px;color:#e9efff;cursor:pointer;">Push ↓</button>
+                    </div>
+                    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                        <button class="physics-force-btn" data-dir="up" style="padding:6px 12px;font-size:11px;background:#441a44;border:none;border-radius:4px;color:#e9efff;cursor:pointer;">Lift</button>
+                        <button class="secondary" id="physics-drop-btn" style="padding:6px 12px;font-size:11px;">Drop</button>
+                        <button class="secondary" id="physics-rotate-btn" style="padding:6px 12px;font-size:11px;">Spin</button>
+                    </div>
+                    <div id="physics-metrics" style="margin-top:8px;">
+                        <div class="metric-row"><span class="metric-label">Time</span><span class="metric-value" id="physics-time">0.000s</span></div>
+                        <div class="metric-row"><span class="metric-label">Bodies</span><span class="metric-value" id="physics-bodies">0</span></div>
+                        <div class="metric-row"><span class="metric-label">Collisions</span><span class="metric-value" id="physics-collisions">0</span></div>
+                        <div class="metric-row"><span class="metric-label">Steps</span><span class="metric-value" id="physics-steps">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Scene Graph <span style="font-size:10px;color:#7c82ff;font-weight:normal;">Intelligence</span></h3>
+                </div>
+                <div class="panel-body" id="intel-panel-body">
+                    <div style="font-size:12px;color:#7c82ff;display:flex;justify-content:space-between;margin-bottom:8px;">
+                        <span>Events: <strong id="intel-events" style="color:#5bd2ff;">0</strong></span>
+                        <span>Relations: <strong id="intel-relations" style="color:#5bd2ff;">0</strong></span>
+                    </div>
+                    <div id="intel-person-tree" style="font-size:11px;color:#7c82ff;background:#08101f;border-radius:6px;padding:8px;margin-bottom:8px;max-height:100px;overflow-y:auto;font-family:monospace;">
+                        <div style="color:#7c82ff;">No person in scene</div>
+                    </div>
+                    <div id="intel-relations-list" style="max-height:80px;overflow-y:auto;margin-bottom:8px;">
+                        <div class="muted" style="font-size:11px;color:#444;">Waiting for interactions...</div>
+                    </div>
+                    <div id="intel-events-list" style="max-height:100px;overflow-y:auto;font-size:11px;color:#7c82ff;">
+                        <div class="muted" style="color:#444;">Waiting for events...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>Natural Language Assistant <span style="font-size:10px;color:#7c82ff;font-weight:normal;">LLM</span></h3>
+                    <div style="display:flex;gap:4px;">
+                        <span id="agent-llm-badge" style="padding:2px 8px;border-radius:4px;font-size:10px;background:#1a2744;color:#7c82ff;">Fallback</span>
+                        <button class="secondary" id="agent-reset-btn" style="padding:4px 10px;font-size:11px;">Clear</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="agent-panel-body">
+                    <div id="agent-chat" style="max-height:180px;overflow-y:auto;margin-bottom:8px;font-size:12px;">
+                        <div class="muted" style="color:#444;padding:8px;">Ask a question to start...</div>
+                    </div>
+                    <div class="query-row">
+                        <input type="text" id="agent-input" placeholder="Ask anything about the scene..." />
+                        <button class="secondary" id="agent-send-btn" style="padding:8px 14px;font-size:12px;">Send</button>
+                    </div>
+                    <div style="display:flex;gap:4px;margin-top:6px;">
+                        <button class="secondary" id="agent-summarize-btn" style="padding:4px 10px;font-size:10px;">Summarize</button>
+                        <button class="secondary" id="agent-suggest-btn" style="padding:4px 10px;font-size:10px;">Suggest</button>
                     </div>
                 </div>
             </div>
@@ -188,6 +321,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2/dist/pose-detection.min.js"></script>
 
     <script type="module">
         import * as THREE from "three";
@@ -199,6 +333,7 @@
         // State
         let stream = null;
         let detector = null;
+        let poseDetector = null;
         let detectionCount = 0;
         let fps = 0;
         let lastFpsTime = performance.now();
@@ -206,7 +341,29 @@
         let ws = null;
         let wsReconnectTimer = null;
         let backendConnected = false;
-        let sceneState = { objects: [], camera_running: false, recent_events: [] };
+        let sceneState = { objects: [], camera_running: false, recent_events: [], human_analytics: {}, human_poses: [] };
+
+        // Skeleton rendering
+        const SKELETON_CONNECTIONS = [
+            [0,1], [0,2], [1,3], [2,4], [5,6],
+            [5,7], [7,9], [6,8], [8,10],
+            [5,11], [6,12], [11,12],
+            [11,13], [13,15], [12,14], [14,16]
+        ];
+        const KEYPOINT_NAMES = [
+            "nose","left_eye","right_eye","left_ear","right_ear",
+            "left_shoulder","right_shoulder","left_elbow","right_elbow",
+            "left_wrist","right_wrist","left_hip","right_hip",
+            "left_knee","right_knee","left_ankle","right_ankle"
+        ];
+        let skeletonMeshes = [];
+        let ghostMeshes = [];
+        let predSeconds = 0;
+        let predTimeline = null;
+        let physicsBodies = {};
+        let physicsMeshes = new Map();
+        let selectedPhysicsTarget = "";
+        let physicsRunning = false;
 
         // DOM
         const video = document.getElementById("webcam");
@@ -264,6 +421,11 @@
         }
         resize();
         window.addEventListener("resize", resize);
+        window.addEventListener("beforeunload", () => {
+            if (stream) { video.pause(); video.srcObject = null; stream.getTracks().forEach(t => t.stop()); stream = null; }
+            if (ws) { ws.close(); ws = null; }
+            try { fetch(BACKEND_URL + "/camera/stop", { method: "POST", keepalive: true }); } catch (e) {}
+        });
 
         loading3d.style.display = "none";
 
@@ -289,13 +451,15 @@
             backendLabel.textContent = connected ? "Backend connected" : "Backend disconnected";
         }
 
-        // WebSocket connection
+        // WebSocket connection with exponential backoff
+        let wsReconnectTry = 0;
         function connectWS() {
             if (ws && ws.readyState === WebSocket.OPEN) return;
             try {
                 ws = new WebSocket(WS_URL);
                 ws.onopen = () => {
                     updateBackendStatus(true);
+                    wsReconnectTry = 0;
                     if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
                 };
                 ws.onmessage = (event) => {
@@ -311,23 +475,36 @@
                 ws.onclose = () => {
                     updateBackendStatus(false);
                     ws = null;
-                    if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, 3000);
+                    const delay = Math.min(1000 * Math.pow(2, wsReconnectTry), 30000);
+                    wsReconnectTry++;
+                    if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, delay);
                 };
                 ws.onerror = () => { ws && ws.close(); };
             } catch (e) {
                 updateBackendStatus(false);
-                if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, 3000);
+                const delay = Math.min(1000 * Math.pow(2, wsReconnectTry), 30000);
+                wsReconnectTry++;
+                if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, delay);
             }
         }
 
-        // Load model
+        // Load models
         async function loadModel() {
             try {
                 detector = await cocoSsd.load();
                 document.getElementById("model-status").classList.add("good");
             } catch (e) {
-                console.error("Model error:", e);
+                console.error("COCO-SSD error:", e);
                 document.getElementById("model-status").classList.add("bad");
+            }
+            try {
+                poseDetector = await poseDetection.createDetector(
+                    poseDetection.SupportedModels.MoveNet,
+                    { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+                );
+                console.log("MoveNet loaded");
+            } catch (e) {
+                console.error("MoveNet error:", e);
             }
         }
 
@@ -364,8 +541,14 @@
 
         let frameIdCounter = 0;
 
+        let detectLoopRunning = false;
+
         async function detectLoop() {
+            if (detectLoopRunning) return;
+            detectLoopRunning = true;
+
             if (!stream || !detector) {
+                detectLoopRunning = false;
                 if (stream) setTimeout(detectLoop, 200);
                 return;
             }
@@ -400,10 +583,10 @@
                             label: p.class,
                             score: p.score,
                             bbox: {
-                                x: p.bbox[0],
-                                y: p.bbox[1],
-                                width: p.bbox[2],
-                                height: p.bbox[3]
+                                x: Math.max(0, p.bbox[0] || 0),
+                                y: Math.max(0, p.bbox[1] || 0),
+                                width: Math.max(1, Math.min(video.videoWidth || 640, p.bbox[2] || 0)),
+                                height: Math.max(1, Math.min(video.videoHeight || 480, p.bbox[3] || 0)),
                             }
                         })),
                         camera_active: true
@@ -424,8 +607,33 @@
                     }
                 }
 
-                if (filtered.length > 0) {
-                    console.log("AXIS detected:", filtered.map(p => p.class + "(" + Math.round(p.score*100) + "%)").join(", "));
+                // Pose detection
+                let poses = [];
+                if (poseDetector) {
+                    try {
+                        const poseResults = await poseDetector.estimatePoses(video);
+                        if (poseResults && poseResults.length > 0) {
+                            poses = poseResults.map((pr, pi) => ({
+                                person_id: "person_" + pi,
+                                keypoints: (pr.keypoints || []).reduce((acc, kp, ki) => {
+                                    const name = KEYPOINT_NAMES[ki] || "kp_" + ki;
+                                    acc[name] = { x: kp.x, y: kp.y, z: (kp.score || 0) * 2 - 1, confidence: kp.score || 0 };
+                                    return acc;
+                                }, {})
+                            }));
+                            renderSkeleton(poseResults[0].keypoints);
+                            drawSkeleton2D(overlayCtx, poseResults[0].keypoints);
+                            try {
+                                await fetch(BACKEND_URL + "/human/pose", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ poses })
+                                });
+                            } catch (e) {}
+                        } else {
+                            clearSkeleton();
+                        }
+                    } catch (e) { console.warn("Pose error:", e); }
                 }
 
                 // Update local object list
@@ -443,6 +651,7 @@
                 console.error("Detect error:", e);
             }
 
+            detectLoopRunning = false;
             if (stream) requestAnimationFrame(detectLoop);
         }
 
@@ -460,98 +669,630 @@
             ).join('');
         }
 
-        function createLabelSprite(text) {
+        // Gaussian Splat Shader
+        const gaussianVertShader = `
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            void main() {
+                vNormal = normalize(normalMatrix * normal);
+                vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                vPosition = mvPosition.xyz;
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        `;
+
+        const gaussianFragShader = `
+            uniform vec3 uColor;
+            uniform float uOpacity;
+            uniform vec3 uScale;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+
+            void main() {
+                vec3 normal = normalize(vNormal);
+                vec3 viewDir = normalize(-vPosition);
+                float intensity = pow(max(0.0, dot(normal, viewDir)), 1.5);
+
+                // Gaussian falloff from center
+                float dist = length(vPosition);
+                float gaussian = exp(-dist * dist * 2.0);
+
+                vec3 color = uColor * (0.4 + 0.8 * intensity);
+                float alpha = uOpacity * gaussian;
+
+                // Soft glow edge
+                float glow = exp(-dist * dist * 1.5) * 0.3;
+                color += glow * uColor;
+
+                gl_FragColor = vec4(color, alpha);
+            }
+        `;
+
+        function createGaussianMaterial(color, opacity, scale) {
+            return new THREE.ShaderMaterial({
+                uniforms: {
+                    uColor: { value: new THREE.Color(color) },
+                    uOpacity: { value: opacity },
+                    uScale: { value: new THREE.Vector3(scale.x, scale.y, scale.z) },
+                },
+                vertexShader: gaussianVertShader,
+                fragmentShader: gaussianFragShader,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.NormalBlending,
+            });
+        }
+
+        function kpTo3D(kpx, kpy, videoW, videoH) {
+            const nx = (kpx / videoW) - 0.5;
+            const ny = 0.5 - (kpy / videoH);
+            const z = 2.5;
+            return { x: nx * 6, y: ny * 4, z };
+        }
+
+        function renderSkeleton(keypoints) {
+            clearSkeleton();
+            if (!keypoints || keypoints.length < 17) return;
+            const vw = video.videoWidth || 640;
+            const vh = video.videoHeight || 480;
+            const jointGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const jointMat = new THREE.MeshStandardMaterial({ color: 0x5bd2ff, emissive: 0x5bd2ff, emissiveIntensity: 0.5 });
+
+            keypoints.forEach((kp) => {
+                if ((kp.score || 0) < 0.3) return;
+                const p3 = kpTo3D(kp.x, kp.y, vw, vh);
+                const mesh = new THREE.Mesh(jointGeo, jointMat);
+                mesh.position.set(p3.x, p3.y, p3.z);
+                scene.add(mesh);
+                skeletonMeshes.push(mesh);
+            });
+
+            SKELETON_CONNECTIONS.forEach(([i, j]) => {
+                const a = keypoints[i], b = keypoints[j];
+                if (!a || !b || (a.score || 0) < 0.3 || (b.score || 0) < 0.3) return;
+                const p1 = kpTo3D(a.x, a.y, vw, vh);
+                const p2 = kpTo3D(b.x, b.y, vw, vh);
+                const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2, z: (p1.z + p2.z) / 2 };
+                const dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+                const length = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                if (length < 0.01) return;
+                const boneGeo = new THREE.CylinderGeometry(0.025, 0.025, length, 4);
+                const boneMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.7 });
+                const bone = new THREE.Mesh(boneGeo, boneMat);
+                bone.position.set(mid.x, mid.y, mid.z);
+                const up = new THREE.Vector3(0, 1, 0);
+                const dir = new THREE.Vector3(dx, dy, dz).normalize();
+                const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
+                bone.quaternion.copy(quat);
+                scene.add(bone);
+                skeletonMeshes.push(bone);
+            });
+        }
+
+        function clearSkeleton() {
+            skeletonMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+            skeletonMeshes = [];
+        }
+
+        function drawSkeleton2D(ctx, keypoints) {
+            if (!keypoints || keypoints.length < 17) return;
+            ctx.fillStyle = "#4ade80";
+            ctx.strokeStyle = "#4ade80";
+            ctx.lineWidth = 2;
+            keypoints.forEach(kp => {
+                if ((kp.score || 0) < 0.3) return;
+                ctx.beginPath();
+                ctx.arc(kp.x, kp.y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            SKELETON_CONNECTIONS.forEach(([i, j]) => {
+                const a = keypoints[i], b = keypoints[j];
+                if (!a || !b || (a.score || 0) < 0.3 || (b.score || 0) < 0.3) return;
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+            });
+        }
+
+        function updateHumanAnalytics(state) {
+            const analytics = state.human_analytics || {};
+            const poses = state.human_poses || [];
+            const hasPerson = poses.length > 0;
+
+            document.getElementById("human-status").textContent = hasPerson
+                ? "Tracking " + poses.length + " person(s)"
+                : "No person detected";
+            document.getElementById("human-metrics").style.display = hasPerson ? "block" : "none";
+
+            if (!hasPerson) return;
+
+            const ja = analytics.joint_angles || {};
+            document.getElementById("h-balance").textContent = (analytics.balance || 0).toFixed(2);
+            document.getElementById("h-stability").textContent = (analytics.stability || 0).toFixed(2);
+            document.getElementById("h-speed").textContent = (analytics.velocity ? analytics.velocity.speed.toFixed(2) : "0.00");
+            document.getElementById("h-l-elbow").textContent = ja.left_elbow ? Math.round(ja.left_elbow) + "°" : "--";
+            document.getElementById("h-r-elbow").textContent = ja.right_elbow ? Math.round(ja.right_elbow) + "°" : "--";
+            document.getElementById("h-l-knee").textContent = ja.left_knee ? Math.round(ja.left_knee) + "°" : "--";
+            document.getElementById("h-r-knee").textContent = ja.right_knee ? Math.round(ja.right_knee) + "°" : "--";
+            document.getElementById("h-motion").textContent = analytics.is_moving ? "Moving" : "Still";
+
+            // Feed prediction panel
+            updatePredictionPanel(state);
+        }
+
+        function updatePredictionPanel(state) {
+            const pred = state.prediction || {};
+            const action = pred.action || {};
+            const stats = pred.stats || {};
+            const timeline = pred.timeline || {};
+
+            document.getElementById("pred-action").textContent = action.action || "--";
+            document.getElementById("pred-confidence").textContent = action.confidence
+                ? Math.round(action.confidence * 100) + "%" : "--";
+            document.getElementById("pred-tracked").textContent = stats.tracked_objects || 0;
+            document.getElementById("pred-frames").textContent = stats.human_pose_frames || 0;
+
+            predTimeline = timeline;
+
+            const sec = predSeconds;
+            const label = sec === 0 ? "now" : "+" + sec + "s";
+            document.getElementById("pred-sec-label").textContent = label;
+
+            let count = 0;
+            if (sec === 0 && timeline.current) {
+                count = timeline.current.objects ? timeline.current.objects.length : 0;
+            } else if (sec > 0 && timeline.timeline) {
+                const key = "+" + sec + "s";
+                const frame = timeline.timeline[key];
+                if (frame) count = frame.objects ? frame.objects.length : 0;
+            }
+            document.getElementById("pred-count").textContent = count + " objects";
+
+            renderGhostPredictions();
+        }
+
+        function renderGhostPredictions() {
+            clearGhosts();
+            const timeline = predTimeline;
+            if (!timeline) return;
+
+            let predictions = [];
+            const sec = predSeconds;
+
+            if (sec === 0 && timeline.current) {
+                (timeline.current.objects || []).forEach(o => {
+                    const pos = o.position || {};
+                    predictions.push({
+                        class_name: o.class_name,
+                        position: pos,
+                        confidence: 0.6,
+                        is_ghost: true
+                    });
+                });
+            } else if (sec > 0 && timeline.timeline) {
+                const key = "+" + sec + "s";
+                const frame = timeline.timeline[key];
+                if (frame) {
+                    (frame.objects || []).forEach(o => {
+                        const pos = o.predicted_position || {};
+                        predictions.push({
+                            class_name: o.class_name,
+                            position: pos,
+                            confidence: o.confidence || 0.3,
+                            is_ghost: true
+                        });
+                    });
+                }
+            }
+
+            predictions.forEach((item) => {
+                const color = new THREE.Color().setHSL(
+                    (item.class_name.charCodeAt(0) * 17) % 360 / 360,
+                    0.5, 0.7
+                );
+                const ghostMat = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: Math.max(0.15, item.confidence * 0.5),
+                    wireframe: true,
+                    depthWrite: false,
+                });
+                const ghost = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 12), ghostMat);
+                const pos = item.position || {};
+                ghost.position.set(pos.x || 0, (pos.y || 0) + 0.4, pos.z || 0);
+                scene.add(ghost);
+                ghostMeshes.push(ghost);
+
+                // Label for ghost
+                const sprite = createGaussianLabel(item.class_name + "?" + (item.confidence ? " " + Math.round(item.confidence * 100) + "%" : ""));
+                sprite.position.y = 1.2;
+                sprite.material.opacity = 0.5;
+                ghost.add(sprite);
+            });
+        }
+
+        function clearGhosts() {
+            ghostMeshes.forEach(m => {
+                scene.remove(m);
+                m.geometry.dispose();
+                m.material.dispose();
+            });
+            ghostMeshes = [];
+        }
+
+        // Physics
+        function updatePhysicsPanel(state) {
+            const physics = state.physics || {};
+            const bodies = physics.bodies || [];
+
+            document.getElementById("physics-time").textContent = (physics.time || 0).toFixed(3) + "s";
+            document.getElementById("physics-bodies").textContent = physics.body_count || 0;
+            document.getElementById("physics-collisions").textContent = physics.total_collisions || 0;
+            document.getElementById("physics-steps").textContent = physics.steps || 0;
+
+            if (bodies.length > 0 && selectedPhysicsTarget) {
+                const target = bodies.find(b => b.object_id === selectedPhysicsTarget);
+                if (target) {
+                    document.getElementById("physics-body").textContent = target.class_name + " (" + target.object_id.slice(0, 12) + ")";
+                    document.getElementById("physics-mass").textContent = target.mass + " kg";
+                }
+            }
+
+            physicsBodies = {};
+            bodies.forEach(b => { physicsBodies[b.object_id] = b; });
+
+            // Populate target select
+            const select = document.getElementById("physics-target");
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">--select--</option>';
+            bodies.forEach(b => {
+                const opt = document.createElement("option");
+                opt.value = b.object_id;
+                opt.textContent = b.class_name + " (" + b.object_id.slice(0, 10) + ")";
+                select.appendChild(opt);
+            });
+            if (currentVal && bodies.some(b => b.object_id === currentVal)) {
+                select.value = currentVal;
+            } else if (bodies.length > 0) {
+                select.value = bodies[0].object_id;
+                selectedPhysicsTarget = bodies[0].object_id;
+            } else {
+                selectedPhysicsTarget = "";
+            }
+
+            renderPhysicsMeshes();
+        }
+
+        function renderPhysicsMeshes() {
+            const bodies = Object.values(physicsBodies);
+            const known = new Set();
+
+            bodies.forEach(b => {
+                known.add(b.object_id);
+                let mesh = physicsMeshes.get(b.object_id);
+                const pos = b.position || {};
+                const vel = b.velocity || {};
+
+                if (!mesh) {
+                    const color = new THREE.Color().setHSL(
+                        (b.class_name.charCodeAt(0) * 17) % 360 / 360,
+                        0.8, 0.5
+                    );
+                    const mat = new THREE.MeshPhongMaterial({
+                        color: color,
+                        transparent: true,
+                        opacity: 0.6,
+                        wireframe: false,
+                    });
+                    mesh = new THREE.Mesh(new THREE.SphereGeometry(b.radius || 0.3, 16, 16), mat);
+                    mesh.userData.object_id = b.object_id;
+                    scene.add(mesh);
+
+                    // Wireframe overlay for physics visual
+                    const wireMat = new THREE.MeshBasicMaterial({
+                        color: 0x4ade80,
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.3,
+                    });
+                    const wire = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), wireMat);
+                    wire.scale.set(b.radius || 0.3, b.radius || 0.3, b.radius || 0.3);
+                    mesh.add(wire);
+
+                    // Label
+                    const sprite = createGaussianLabel(b.class_name);
+                    sprite.position.y = (b.radius || 0.3) + 0.6;
+                    sprite.material.opacity = 0.7;
+                    mesh.add(sprite);
+
+                    physicsMeshes.set(b.object_id, mesh);
+                }
+
+                // Highlight selected
+                const isSelected = b.object_id === selectedPhysicsTarget;
+                mesh.material.emissive = isSelected ? new THREE.Color(0x5bd2ff) : new THREE.Color(0x000000);
+                mesh.material.emissiveIntensity = isSelected ? 0.4 : 0;
+
+                // Update position from physics
+                mesh.position.set(pos.x || 0, (pos.y || 0) + (b.radius || 0.3), pos.z || 0);
+
+                // Velocity arrow direction hint — tint by speed
+                const speed = Math.sqrt((vel.x || 0) ** 2 + (vel.y || 0) ** 2 + (vel.z || 0) ** 2);
+                const intensity = Math.min(1, speed / 5);
+                mesh.material.opacity = 0.4 + intensity * 0.4;
+            });
+
+            // Remove stale
+            physicsMeshes.forEach((mesh, id) => {
+                if (!known.has(id)) {
+                    scene.remove(mesh);
+                    mesh.geometry && mesh.geometry.dispose();
+                    mesh.material && mesh.material.dispose();
+                    physicsMeshes.delete(id);
+                }
+            });
+        }
+
+        async function physicsInit() {
+            try {
+                const resp = await fetch(BACKEND_URL + "/physics/init", { method: "POST" });
+                const data = await resp.json();
+                if (data.bodies) {
+                    physicsBodies = {};
+                    data.bodies.forEach(b => { physicsBodies[b.object_id] = b; });
+                    selectedPhysicsTarget = data.bodies.length > 0 ? data.bodies[0].object_id : "";
+                    updatePhysicsPanel({ physics: data });
+                    showToast("Physics: " + data.body_count + " bodies", "info");
+                }
+            } catch (e) {
+                showToast("Physics init failed: " + e.message, "error");
+            }
+        }
+
+        async function physicsStep() {
+            try {
+                const resp = await fetch(BACKEND_URL + "/physics/step", { method: "POST" });
+                const data = await resp.json();
+                updatePhysicsPanel({ physics: data });
+            } catch (e) {
+                showToast("Physics step failed: " + e.message, "error");
+            }
+        }
+
+        async function physicsApplyForce(direction) {
+            const target = document.getElementById("physics-target").value;
+            if (!target) { showToast("Select a physics target first", "error"); return; }
+            try {
+                const opts = { method: "POST", headers: { "Content-Type": "application/json" } };
+                if (direction === "up") {
+                    opts.body = JSON.stringify({ object_id: target, height: 2.0 });
+                    await fetch(BACKEND_URL + "/physics/drop", opts);
+                } else {
+                    opts.body = JSON.stringify({ object_id: target, direction: direction, strength: 15.0 });
+                    await fetch(BACKEND_URL + "/physics/push", opts);
+                }
+                // Step a few times to show effect
+                for (let i = 0; i < 5; i++) {
+                    await fetch(BACKEND_URL + "/physics/step", { method: "POST" });
+                }
+                const stateResp = await fetch(BACKEND_URL + "/physics/state");
+                const state = await stateResp.json();
+                updatePhysicsPanel({ physics: state });
+            } catch (e) {
+                showToast("Physics action failed: " + e.message, "error");
+            }
+        }
+
+        async function physicsDrop() {
+            await physicsApplyForce("up");
+        }
+
+        async function physicsRotate() {
+            const target = document.getElementById("physics-target").value;
+            if (!target) { showToast("Select a physics target first", "error"); return; }
+            try {
+                await fetch(BACKEND_URL + "/physics/rotate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ object_id: target, axis: "y", degrees: 90.0 })
+                });
+                for (let i = 0; i < 5; i++) {
+                    await fetch(BACKEND_URL + "/physics/step", { method: "POST" });
+                }
+                const stateResp = await fetch(BACKEND_URL + "/physics/state");
+                const state = await stateResp.json();
+                updatePhysicsPanel({ physics: state });
+            } catch (e) {
+                showToast("Rotate failed: " + e.message, "error");
+            }
+        }
+
+        // Scene graph intelligence
+        function updateIntelPanel(state) {
+            const intel = state.intelligence || {};
+            const events = intel.events || [];
+            const interactions = intel.interactions || [];
+            const personTree = intel.person_tree;
+
+            document.getElementById("intel-events").textContent = intel.event_count || 0;
+            document.getElementById("intel-relations").textContent = intel.interaction_count || 0;
+
+            // Person tree
+            const treeDiv = document.getElementById("intel-person-tree");
+            if (personTree && personTree.label) {
+                let html = renderPersonTree(personTree, 0);
+                treeDiv.innerHTML = html;
+            } else {
+                treeDiv.innerHTML = '<div style="color:#7c82ff;">No person in scene</div>';
+            }
+
+            // Relations list
+            const relDiv = document.getElementById("intel-relations-list");
+            if (interactions.length > 0) {
+                relDiv.innerHTML = interactions.slice(0, 8).map(i =>
+                    '<div class="metric-row" style="font-size:11px;">' +
+                    '<span class="metric-label">' + i.source_label + ' <span style="color:#4ade80;">' + i.relation + '</span> ' + i.target_label + '</span>' +
+                    '<span class="metric-value">' + Math.round(i.confidence * 100) + '%</span></div>'
+                ).join('');
+            } else {
+                relDiv.innerHTML = '<div class="muted" style="font-size:11px;color:#444;">Waiting for interactions...</div>';
+            }
+
+            // Events list
+            const evDiv = document.getElementById("intel-events-list");
+            if (events.length > 0) {
+                evDiv.innerHTML = events.slice(-10).reverse().map(e => {
+                    const ts = e.timestamp ? new Date(e.timestamp * 1000).toLocaleTimeString() : "";
+                    return '<div style="padding:2px 0;">[' + ts + '] <span style="color:' + eventTypeColor(e.event_type) + ';">' + e.event_type + '</span> ' + (e.description || "") + '</div>';
+                }).join('');
+            } else {
+                evDiv.innerHTML = '<div class="muted" style="color:#444;">Waiting for events...</div>';
+            }
+        }
+
+        function renderPersonTree(node, depth) {
+            if (!node) return "";
+            const indent = "  ".repeat(depth);
+            const prefix = depth === 0 ? "└── " : "  ".repeat(depth) + "└── ";
+            const label = node.label || node.id || "?";
+            const rel = node.relation ? " <span style='color:#4ade80;'>" + node.relation + "</span> " : "";
+            let html = '<div style="padding:1px 0;">';
+            if (depth === 0) {
+                html += '<span style="color:#5bd2ff;font-weight:600;">' + label + '</span>';
+            } else {
+                html += prefix + rel + '<span style="color:#e9efff;">' + label + '</span>';
+                if (node.confidence) {
+                    html += ' <span style="color:#7c82ff;font-size:10px;">' + Math.round(node.confidence * 100) + '%</span>';
+                }
+            }
+            html += '</div>';
+            if (node.children) {
+                node.children.forEach(c => { html += renderPersonTree(c, depth + 1); });
+            }
+            return html;
+        }
+
+        function eventTypeColor(type) {
+            const colors = {
+                entered: "#4ade80",
+                exited: "#f87171",
+                moved: "#5bd2ff",
+                interacts_with: "#fbbf24",
+                picked_up: "#f59e0b",
+                put_down: "#f59e0b",
+            };
+            return colors[type] || "#7c82ff";
+        }
+
+        async function physicsReset() {
+            try {
+                const resp = await fetch(BACKEND_URL + "/physics/reset", { method: "POST" });
+                const data = await resp.json();
+                physicsBodies = {};
+                physicsMeshes.forEach((mesh, id) => {
+                    scene.remove(mesh);
+                    mesh.geometry && mesh.geometry.dispose();
+                    mesh.material && mesh.material.dispose();
+                });
+                physicsMeshes.clear();
+                updatePhysicsPanel({ physics: data });
+                showToast("Physics reset", "info");
+            } catch (e) {
+                showToast("Reset failed: " + e.message, "error");
+            }
+        }
+
+        function createGaussianLabel(text) {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             canvas.width = 256;
             canvas.height = 72;
-            ctx.fillStyle = "rgba(0,0,0,0.7)";
-            ctx.fillRect(4, 4, canvas.width - 8, canvas.height - 8);
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(2, 2, canvas.width - 4, canvas.height - 4);
             ctx.fillStyle = "#fff";
-            ctx.font = "bold 24px sans-serif";
+            ctx.font = "bold 22px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
-            ctx.fillText(text, canvas.width/2, canvas.height/2);
-
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
             const texture = new THREE.CanvasTexture(canvas);
             texture.needsUpdate = true;
-            const mat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+            const mat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false, transparent: true, opacity: 0.85 });
             const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(2, 0.5, 1);
+            sprite.scale.set(1.6, 0.45, 1);
             return sprite;
         }
 
         function updateSceneFromState(state) {
-            if (!state || !state.objects) return;
+            if (!state) return;
 
+            const gaussians = state.gaussians || [];
             const backendObjects = state.objects || [];
             const knownIds = new Set();
+            const renderData = gaussians.length > 0 ? gaussians : backendObjects;
 
-            const currentIds = new Set(objectMeshes.keys());
-
-            backendObjects.forEach((obj, i) => {
-                const id = obj.object_id || obj.class_name + "_" + i;
+            renderData.forEach((item, i) => {
+                const id = item.gaussian_id || item.object_id || item.class_name + "_" + i;
                 knownIds.add(id);
 
                 let isNew = false;
                 let mesh = objectMeshes.get(id);
                 if (!mesh) {
                     isNew = true;
-                    const hue = (obj.class_name.charCodeAt(0) * 17) % 360 / 360;
-                    const color = new THREE.Color().setHSL(hue, 0.9, 0.55);
+                    const color = item.color
+                        ? new THREE.Color(item.color.r || item.color[0], item.color.g || item.color[1], item.color.b || item.color[2])
+                        : new THREE.Color().setHSL((item.class_name.charCodeAt(0) * 17) % 360 / 360, 0.9, 0.55);
 
-                    const mat = new THREE.MeshStandardMaterial({
-                        color: color,
-                        emissive: color,
-                        emissiveIntensity: 0.4,
-                        metalness: 0.2,
-                        roughness: 0.3
-                    });
-                    mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
+                    const opacity = item.opacity || 0.85;
+                    const scale = item.scale || { x: 0.3, y: 0.3, z: 0.3 };
+                    const mat = createGaussianMaterial(color, opacity, scale);
+
+                    mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 24), mat);
                     mesh.userData.id = id;
-                    mesh.userData.label = obj.class_name;
+                    mesh.userData.label = item.class_name;
                     scene.add(mesh);
                     objectMeshes.set(id, mesh);
 
-                    const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-                    const wireMesh = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.05, 1.05), wireMat);
-                    mesh.add(wireMesh);
-
-                    const sprite = createLabelSprite(obj.class_name);
-                    sprite.position.y = 0.8;
+                    const sprite = createGaussianLabel(item.class_name);
+                    sprite.position.y = 1.8;
                     mesh.add(sprite);
+
+                    showToast("Neural: " + item.class_name, "detection");
                 }
 
-                if (isNew) {
-                    showToast("Detected: " + obj.class_name, "detection");
-                }
-
-                const pos = obj.position || {};
-                const size = obj.size || {};
-                const sx = Math.max(0.5, (size.x || 0.4) * 1.5);
-                const sy = Math.max(0.5, (size.y || 0.4) * 1.5);
-                const sz = Math.max(0.5, (size.z || 0.4) * 1.5);
+                const pos = item.position || {};
+                const scale = item.scale || { x: 0.3, y: 0.3, z: 0.3 };
+                const sx = Math.max(0.3, (scale.x || 0.3) * 2.5);
+                const sy = Math.max(0.3, (scale.y || 0.3) * 2.5);
+                const sz = Math.max(0.3, (scale.z || 0.3) * 2.5);
                 mesh.scale.set(sx, sy, sz);
                 mesh.position.set(pos.x || 0, (pos.y || 0) + sy * 0.5, pos.z || 0);
+
+                if (item.color) {
+                    const col = item.color;
+                    const c = new THREE.Color(col.r || col[0], col.g || col[1], col.b || col[2]);
+                    mesh.material.uniforms.uColor.value.copy(c);
+                }
+                mesh.material.uniforms.uOpacity.value = item.opacity || 0.85;
             });
 
-            // Remove stale objects
+            // Remove stale
             objectMeshes.forEach((mesh, id) => {
                 if (!knownIds.has(id)) {
                     scene.remove(mesh);
                     mesh.geometry.dispose();
-                    if (Array.isArray(mesh.material)) mesh.material.forEach(m => m.dispose());
-                    else mesh.material.dispose();
+                    mesh.material.dispose();
                     objectMeshes.delete(id);
                 }
             });
 
             // Update stats
-            document.getElementById("stat-objects").textContent = backendObjects.length;
+            const count = gaussians.length || backendObjects.length;
+            document.getElementById("stat-objects").textContent = count;
             document.getElementById("stat-points").textContent = state.map_points || 0;
-            document.getElementById("scene-info").textContent = backendObjects.length + " objects mapped";
+            document.getElementById("scene-info").textContent = count + " gaussians";
 
-            // Update events
+            // Events
             if (state.recent_events && state.recent_events.length > 0) {
                 const eventsDiv = document.getElementById("events-list");
                 eventsDiv.innerHTML = state.recent_events.slice(0, 10).map(e =>
@@ -559,12 +1300,31 @@
                 ).join('');
             }
 
-            // Update object list from backend
-            if (backendObjects.length > 0) {
+            // Human analytics
+            updateHumanAnalytics(state);
+
+            // Physics
+            updatePhysicsPanel(state);
+
+            // Scene graph intelligence
+            updateIntelPanel(state);
+
+            // Agent LLM badge
+            const agentInfo = state.agent || {};
+            const badge = document.getElementById("agent-llm-badge");
+            if (agentInfo.has_llm) {
+                badge.textContent = "LLM";
+                badge.style.background = "#1a3a2a";
+                badge.style.color = "#4ade80";
+            }
+
+            // Object list
+            if (gaussians.length > 0 || backendObjects.length > 0) {
+                const items = gaussians.length > 0 ? gaussians : backendObjects;
                 const counts = {};
-                backendObjects.forEach(o => { counts[o.class_name] = (counts[o.class_name] || 0) + 1; });
+                items.forEach(o => { counts[o.class_name] = (counts[o.class_name] || 0) + 1; });
                 objectList.innerHTML = Object.entries(counts).map(([cls, count]) =>
-                    '<div class="object-item"><strong>' + cls + '</strong><div class="muted">' + count + ' in scene</div></div>'
+                    '<div class="object-item"><strong>' + cls + '</strong><div class="muted">' + count + ' neural gaussian' + (count > 1 ? 's' : '') + '</div></div>'
                 ).join('');
             }
         }
@@ -599,26 +1359,110 @@
             if (e.key === "Enter") document.getElementById("search-btn").click();
         });
 
-        // Query
+        // Query (old — still works, now routes through agent)
         document.getElementById("query-btn").addEventListener("click", async () => {
             const question = document.getElementById("query-input").value.trim();
             if (!question) return;
             const responseDiv = document.getElementById("query-response");
             responseDiv.textContent = "Thinking...";
             try {
-                const resp = await fetch(BACKEND_URL + "/query", {
+                const resp = await fetch(BACKEND_URL + "/agent/query", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ question, context: true })
+                    body: JSON.stringify({ question, use_llm: true })
                 });
                 const data = await resp.json();
                 responseDiv.textContent = data.response || "No response";
+                addAgentMessage("user", question);
+                addAgentMessage("assistant", data.response, data.sources);
             } catch (e) {
                 responseDiv.textContent = "Query failed: " + e.message;
             }
         });
         document.getElementById("query-input").addEventListener("keydown", (e) => {
             if (e.key === "Enter") document.getElementById("query-btn").click();
+        });
+
+        // Agent — Natural Language Assistant
+        function addAgentMessage(role, text, sources) {
+            const chat = document.getElementById("agent-chat");
+            const div = document.createElement("div");
+            div.style.padding = "6px 8px";
+            div.style.marginBottom = "4px";
+            div.style.borderRadius = "6px";
+            if (role === "user") {
+                div.style.background = "#0d1526";
+                div.style.borderLeft = "2px solid #5bd2ff";
+                div.innerHTML = '<span style="color:#5bd2ff;font-weight:600;">You:</span> <span style="color:#e9efff;">' + text + '</span>';
+            } else {
+                div.style.background = "#08101f";
+                div.style.borderLeft = "2px solid #4ade80";
+                const src = sources && sources.length ? ' <span style="color:#7c82ff;font-size:10px;">[' + sources.join(", ") + ']</span>' : "";
+                div.innerHTML = '<span style="color:#4ade80;font-weight:600;">AXIS:</span> <span style="color:#e9efff;">' + text + '</span>' + src;
+            }
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function agentQuery(question) {
+            if (!question) return;
+            addAgentMessage("user", question);
+            try {
+                const resp = await fetch(BACKEND_URL + "/agent/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, use_llm: true })
+                });
+                const data = await resp.json();
+                addAgentMessage("assistant", data.response || "No response", data.sources);
+                // Update LLM badge
+                const badge = document.getElementById("agent-llm-badge");
+                if (data.has_llm) {
+                    badge.textContent = "LLM";
+                    badge.style.background = "#1a3a2a";
+                    badge.style.color = "#4ade80";
+                }
+            } catch (e) {
+                addAgentMessage("assistant", "Error: " + e.message);
+            }
+        }
+
+        async function agentSummarize() {
+            try {
+                const resp = await fetch(BACKEND_URL + "/agent/summarize", { method: "POST" });
+                const data = await resp.json();
+                addAgentMessage("assistant", data.summary || "No summary available", ["summary"]);
+            } catch (e) {
+                addAgentMessage("assistant", "Error: " + e.message);
+            }
+        }
+
+        async function agentSuggest() {
+            try {
+                const resp = await fetch(BACKEND_URL + "/agent/suggest", { method: "POST" });
+                const data = await resp.json();
+                addAgentMessage("assistant", data.recommendations || "No suggestions", ["recommendation"]);
+            } catch (e) {
+                addAgentMessage("assistant", "Error: " + e.message);
+            }
+        }
+
+        // Agent event handlers
+        document.getElementById("agent-send-btn").addEventListener("click", () => {
+            const input = document.getElementById("agent-input");
+            agentQuery(input.value.trim());
+            input.value = "";
+        });
+        document.getElementById("agent-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") document.getElementById("agent-send-btn").click();
+        });
+        document.getElementById("agent-summarize-btn").addEventListener("click", agentSummarize);
+        document.getElementById("agent-suggest-btn").addEventListener("click", agentSuggest);
+        document.getElementById("agent-reset-btn").addEventListener("click", async () => {
+            try {
+                await fetch(BACKEND_URL + "/agent/reset", { method: "POST" });
+                document.getElementById("agent-chat").innerHTML = '<div class="muted" style="color:#444;padding:8px;">Conversation cleared.</div>';
+            } catch (e) {}
         });
 
         // Camera controls
@@ -630,6 +1474,55 @@
             try {
                 await fetch(BACKEND_URL + "/scene/reset", { method: "POST" });
             } catch (e) {}
+        });
+
+        // Export scene as JSON
+        document.getElementById("export-btn").addEventListener("click", () => {
+            try {
+                const data = JSON.stringify(sceneState, null, 2);
+                const blob = new Blob([data], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "axis_neural_scene_" + Date.now() + ".json";
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast("Scene exported as JSON", "info");
+            } catch (e) {
+                showToast("Export failed: " + e.message, "error");
+            }
+        });
+
+        // Prediction timeline buttons
+        document.querySelectorAll(".pred-timeline-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                document.querySelectorAll(".pred-timeline-btn").forEach(b => {
+                    b.style.background = "#1a2744";
+                    b.style.color = "#7c82ff";
+                });
+                this.style.background = "#5bd2ff";
+                this.style.color = "#0a0f1a";
+                predSeconds = parseInt(this.dataset.sec) || 0;
+                if (sceneState) updatePredictionPanel(sceneState);
+            });
+        });
+
+        // Physics buttons
+        document.getElementById("physics-init-btn").addEventListener("click", physicsInit);
+        document.getElementById("physics-step-btn").addEventListener("click", physicsStep);
+        document.getElementById("physics-reset-btn").addEventListener("click", physicsReset);
+        document.getElementById("physics-drop-btn").addEventListener("click", physicsDrop);
+        document.getElementById("physics-rotate-btn").addEventListener("click", physicsRotate);
+
+        document.querySelectorAll(".physics-force-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                physicsApplyForce(this.dataset.dir);
+            });
+        });
+
+        document.getElementById("physics-target").addEventListener("change", function() {
+            selectedPhysicsTarget = this.value;
+            if (sceneState) updatePhysicsPanel(sceneState);
         });
 
         // Init

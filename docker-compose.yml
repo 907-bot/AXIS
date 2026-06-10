@@ -25,31 +25,22 @@ services:
       retries: 3
       start_period: 10s
 
-  # Optional: PostgreSQL for persistent storage
-  postgres:
-    image: postgres:15-alpine
-    container_name: axis-postgres
+  # Kafka for event streaming
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: axis-kafka
+    ports:
+      - "9092:9092"
     environment:
-      POSTGRES_DB: axis
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  # Optional: Qdrant for vector search
-  qdrant:
-    image: qdrant/qdrant:v1.7.0
-    container_name: axis-qdrant
-    ports:
-      - "6335:6333"
-      - "6336:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
+      - CLUSTER_ID=axis-cluster
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
     restart: unless-stopped
 
 volumes:
-  postgres_data:
-  qdrant_data:

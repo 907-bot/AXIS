@@ -38,30 +38,18 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/axis"
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_user: str = "neo4j"
-    neo4j_password: str = "password"
 
     camera_fps: int = 30
     camera_width: int = 640
     camera_height: int = 480
-    slam_enabled: bool = True
-    reconstruction_interval: int = 10
-
-    sam_model: str = "sam2.1_hiera_large"
-    dino_model: str = "dinov2_vitl14"
-    clip_model: str = "ViT-L/14"
 
     openai_api_key: Optional[str] = None
-    llm_model: str = "gpt-4-turbo-preview"
+    llm_model: str = "gpt-4o-mini"
     llm_temperature: float = 0.7
     llm_max_tokens: int = 2000
 
     ws_enabled: bool = True
     ws_heartbeat: int = 30
-
-    cuda_enabled: bool = False
-    gpu_device: int = 0
 
 
 @lru_cache()
