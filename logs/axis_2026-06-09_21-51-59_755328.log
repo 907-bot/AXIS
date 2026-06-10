@@ -1,0 +1,4 @@
+2026-06-09 21:51:59.763 | INFO     | __main__:main:39 - Starting AXIS v0.2.0
+2026-06-09 21:51:59.763 | INFO     | __main__:main:40 - Debug mode: False
+2026-06-09 21:52:01.797 | INFO     | backend.api.server:lifespan:518 - AXIS MVP server starting
+2026-06-09 21:52:01.800 | INFO     | backend.api.server:lifespan:520 - AXIS MVP server shutting down

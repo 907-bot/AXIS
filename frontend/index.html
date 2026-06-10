@@ -7,15 +7,20 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0f1a; color: #e9efff; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #1a2744 0%, #0d1526 100%); padding: 20px; border-bottom: 1px solid #1f4372; }
+        .header { background: linear-gradient(135deg, #1a2744 0%, #0d1526 100%); padding: 20px; border-bottom: 1px solid #1f4372; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { color: #5bd2ff; font-size: 24px; }
         .header p { color: #7c82ff; font-size: 14px; margin-top: 5px; }
+        .header-right { display: flex; gap: 12px; align-items: center; }
+        .backend-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #7c82ff; }
+        .backend-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
+        .backend-dot.connected { background: #4ade80; }
+        .backend-dot.disconnected { background: #f87171; }
         .main-container { display: flex; gap: 20px; padding: 20px; max-width: 1600px; margin: 0 auto; }
-        .left-panel { flex: 0 0 380px; }
+        .left-panel { flex: 0 0 420px; }
         .video-container { background: #08101f; border-radius: 12px; overflow: hidden; border: 1px solid #1f4372; }
         .video-header { padding: 12px 16px; background: #0d1526; border-bottom: 1px solid #1f4372; display: flex; justify-content: space-between; align-items: center; }
         .video-header h3 { font-size: 14px; color: #5bd2ff; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; display: inline-block; }
         .status-dot.good { background: #4ade80; }
         .status-dot.bad { background: #f87171; }
         .video-wrapper { position: relative; background: #000; min-height: 240px; }
@@ -45,19 +50,41 @@
         .info-box h4 { color: #5bd2ff; margin-bottom: 8px; font-size: 13px; }
         .info-box ul { list-style: none; font-size: 12px; color: #7c82ff; }
         .info-box li { padding: 4px 0; padding-left: 16px; position: relative; }
-        .info-box li::before { content: '→'; position: absolute; left: 0; color: #5bd2ff; }
-        .object-list { max-height: 200px; overflow-y: auto; }
-        .object-item { padding: 10px; background: #08101f; border-radius: 6px; margin-bottom: 8px; }
-        .object-item strong { color: #5bd2ff; }
-        .object-item .muted { font-size: 12px; color: #7c82ff; margin-top: 4px; }
+        .info-box li::before { content: '\2192'; position: absolute; left: 0; color: #5bd2ff; }
+        .object-list { max-height: 180px; overflow-y: auto; }
+        .object-item { padding: 8px 10px; background: #08101f; border-radius: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .object-item strong { color: #5bd2ff; font-size: 13px; }
+        .object-item .muted { font-size: 11px; color: #7c82ff; }
+        .search-section { padding: 12px 16px; background: #0a1220; border-top: 1px solid #1f4372; }
+        .search-row { display: flex; gap: 8px; }
+        .search-row input { flex: 1; padding: 10px 12px; background: #08101f; border: 1px solid #1f4372; border-radius: 6px; color: #e9efff; font-size: 13px; outline: none; }
+        .search-row input:focus { border-color: #5bd2ff; }
+        .search-row button { padding: 10px 16px; font-size: 13px; }
+        .search-result { padding: 6px 8px; margin-top: 6px; background: #08101f; border-radius: 4px; font-size: 12px; color: #7c82ff; }
+        .search-result .highlight { color: #5bd2ff; }
+        .query-section { padding: 12px 16px; border-top: 1px solid #1f4372; }
+        .query-row { display: flex; gap: 8px; }
+        .query-row input { flex: 1; padding: 10px 12px; background: #08101f; border: 1px solid #1f4372; border-radius: 6px; color: #e9efff; font-size: 13px; outline: none; }
+        .query-row input:focus { border-color: #5bd2ff; }
+        .query-row button { padding: 10px 16px; font-size: 13px; }
+        .query-response { padding: 8px; margin-top: 6px; background: #08101f; border-radius: 4px; font-size: 12px; color: #e9efff; min-height: 20px; }
+        .text-label { position: absolute; color: white; font-size: 11px; font-weight: bold; text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6); pointer-events: none; transform: translate(-50%, -100%); padding: 2px 6px; background: rgba(0,0,0,0.5); border-radius: 4px; white-space: nowrap; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>AXIS - 3D Scene Builder</h1>
-        <p>Real-time camera-based 3D scene reconstruction</p>
+        <div>
+            <h1>AXIS - 3D Scene Builder</h1>
+            <p>Real-time camera-based 3D scene reconstruction</p>
+        </div>
+        <div class="header-right">
+            <div class="backend-status">
+                <span class="backend-dot" id="backend-dot"></span>
+                <span id="backend-label">Connecting...</span>
+            </div>
+        </div>
     </div>
-    
+
     <div class="main-container">
         <div class="left-panel">
             <div class="video-container">
@@ -83,18 +110,35 @@
                     <div class="stat"><strong id="stat-detections">0</strong><span>Detections</span></div>
                 </div>
             </div>
-            
-            <div class="info-box">
-                <h4>Instructions</h4>
-                <ul>
-                    <li>Click "Start Camera" to begin</li>
-                    <li>Point camera at objects</li>
-                    <li>3D scene builds automatically</li>
-                    <li>Rotate 3D view with mouse</li>
-                </ul>
+
+            <div class="panel">
+                <div class="panel-head"><h3>Detected Objects</h3></div>
+                <div class="panel-body">
+                    <div class="object-list" id="object-list">
+                        <div class="object-item muted">No objects detected yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <h4 style="color:#5bd2ff;font-size:13px;margin-bottom:8px;">Search Objects</h4>
+                <div class="search-row">
+                    <input type="text" id="search-input" placeholder="e.g. bottle, chair, person..." />
+                    <button class="secondary" id="search-btn">Search</button>
+                </div>
+                <div id="search-results"></div>
+            </div>
+
+            <div class="query-section">
+                <h4 style="color:#5bd2ff;font-size:13px;margin-bottom:8px;">Ask about the scene</h4>
+                <div class="query-row">
+                    <input type="text" id="query-input" placeholder="e.g. What do you see?" />
+                    <button class="secondary" id="query-btn">Ask</button>
+                </div>
+                <div class="query-response" id="query-response">Ask a question about the scene...</div>
             </div>
         </div>
-        
+
         <div class="right-panel">
             <div class="panel">
                 <div class="panel-head">
@@ -111,20 +155,20 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="panel">
                 <div class="panel-head">
-                    <h3>Detected Objects</h3>
+                    <h3>Scene Events</h3>
                 </div>
                 <div class="panel-body">
-                    <div class="object-list" id="object-list">
-                        <div class="object-item muted">Point camera at objects to detect them</div>
+                    <div id="events-list" style="font-size:12px;color:#7c82ff;max-height:120px;overflow-y:auto;padding-right:8px;">
+                        <div>Waiting for events...</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    
+
     <script type="importmap">
     {
         "imports": {
@@ -133,25 +177,29 @@
         }
     }
     </script>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-    
+
     <script type="module">
         import * as THREE from "three";
         import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-        
-        console.log("AXIS: Starting...");
-        
+
+        const BACKEND_URL = window.location.origin;
+        const WS_URL = BACKEND_URL.replace(/^http/, "ws") + "/ws/scene";
+
         // State
         let stream = null;
         let detector = null;
-        let pointCloud = [];
         let detectionCount = 0;
         let fps = 0;
         let lastFpsTime = performance.now();
         let frameCount = 0;
-        
+        let ws = null;
+        let wsReconnectTimer = null;
+        let backendConnected = false;
+        let sceneState = { objects: [], camera_running: false, recent_events: [] };
+
         // DOM
         const video = document.getElementById("webcam");
         const overlay = document.getElementById("overlay");
@@ -160,19 +208,21 @@
         const threeCanvas = document.getElementById("three-canvas");
         const loading3d = document.getElementById("loading-3d");
         const objectList = document.getElementById("object-list");
-        
+        const backendDot = document.getElementById("backend-dot");
+        const backendLabel = document.getElementById("backend-label");
+
         // Three.js
         const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true, alpha: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x08101f, 1);
-        
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
         camera.position.set(0, 3, 8);
-        
+
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        
+
         // Lights
         scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -181,16 +231,27 @@
         const fillLight = new THREE.DirectionalLight(0x5bd2ff, 0.3);
         fillLight.position.set(-5, 3, -5);
         scene.add(fillLight);
-        
+
         // Grid
         scene.add(new THREE.GridHelper(20, 20, 0x1f4372, 0x142442));
         scene.add(new THREE.AxesHelper(2));
-        
+
+        // Floor
+        const floorGeo = new THREE.PlaneGeometry(20, 20);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a1428, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = 0;
+        scene.add(floor);
+
         // Objects
         const objectMeshes = new Map();
         let pointCloudMesh = null;
-        
-        // Resize
+        let pointCloud = [];
+
+        // Label sprite cache
+        const labelSprites = new Map();
+
         function resize() {
             const w = threeContainer.clientWidth;
             const h = threeContainer.clientHeight;
@@ -200,93 +261,160 @@
         }
         resize();
         window.addEventListener("resize", resize);
-        
-        console.log("AXIS: Three.js ready");
+
         loading3d.style.display = "none";
-        
-        // Animate
+
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
         }
         animate();
-        
+
+        function updateBackendStatus(connected) {
+            backendConnected = connected;
+            backendDot.className = "backend-dot " + (connected ? "connected" : "disconnected");
+            backendLabel.textContent = connected ? "Backend connected" : "Backend disconnected";
+        }
+
+        // WebSocket connection
+        function connectWS() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+            try {
+                ws = new WebSocket(WS_URL);
+                ws.onopen = () => {
+                    updateBackendStatus(true);
+                    if (wsReconnectTimer) { clearTimeout(wsReconnectTimer); wsReconnectTimer = null; }
+                };
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === "state") {
+                            sceneState = data;
+                            updateSceneFromState(data);
+                        } else if (data.type === "pong") {
+                        }
+                    } catch (e) { console.warn("WS parse error:", e); }
+                };
+                ws.onclose = () => {
+                    updateBackendStatus(false);
+                    ws = null;
+                    if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, 3000);
+                };
+                ws.onerror = () => { ws && ws.close(); };
+            } catch (e) {
+                updateBackendStatus(false);
+                if (!wsReconnectTimer) wsReconnectTimer = setTimeout(connectWS, 3000);
+            }
+        }
+
         // Load model
         async function loadModel() {
             try {
-                console.log("Loading COCO-SSD...");
                 detector = await cocoSsd.load();
                 document.getElementById("model-status").classList.add("good");
-                console.log("Model loaded!");
             } catch (e) {
                 console.error("Model error:", e);
                 document.getElementById("model-status").classList.add("bad");
             }
         }
-        
+
         // Start camera
         async function startCamera() {
             try {
-                console.log("Starting camera...");
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 640 }, height: { ideal: 480 } } });
                 video.srcObject = stream;
                 await video.play();
-                
+
                 overlay.width = video.videoWidth || 640;
                 overlay.height = video.videoHeight || 480;
-                
+
                 document.getElementById("cam-status").classList.add("good");
                 document.getElementById("start-btn").textContent = "Stop Camera";
                 document.getElementById("start-btn").className = "secondary";
-                
-                console.log("Camera started!");
+
+                try { await fetch(BACKEND_URL + "/camera/start", { method: "POST" }); } catch (e) {}
                 detectLoop();
             } catch (e) {
                 console.error("Camera error:", e);
                 document.getElementById("cam-status").classList.add("bad");
             }
         }
-        
-        // Stop camera
+
         function stopCamera() {
             if (stream) stream.getTracks().forEach(t => t.stop());
             stream = null;
             document.getElementById("cam-status").classList.remove("good");
             document.getElementById("start-btn").textContent = "Start Camera";
             document.getElementById("start-btn").className = "primary";
+            try { fetch(BACKEND_URL + "/camera/stop", { method: "POST" }); } catch (e) {}
         }
-        
-        // Detect loop
+
+        let frameIdCounter = 0;
+
         async function detectLoop() {
             if (!stream || !detector) {
-                if (stream) setTimeout(detectLoop, 100);
+                if (stream) setTimeout(detectLoop, 200);
                 return;
             }
-            
+
             try {
                 const preds = await detector.detect(video);
                 const filtered = preds.filter(p => p.score > 0.5);
-                
-                // Draw boxes
+
+                // Draw boxes on overlay
                 overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
                 filtered.forEach(p => {
                     const [x, y, w, h] = p.bbox;
                     overlayCtx.strokeStyle = "#5bd2ff";
                     overlayCtx.lineWidth = 2;
                     overlayCtx.strokeRect(x, y, w, h);
-                    overlayCtx.fillStyle = "rgba(91,210,255,0.2)";
+                    overlayCtx.fillStyle = "rgba(91,210,255,0.15)";
                     overlayCtx.fillRect(x, y, w, h);
                     overlayCtx.fillStyle = "#fff";
-                    overlayCtx.font = "12px sans-serif";
+                    overlayCtx.font = "bold 12px sans-serif";
                     overlayCtx.fillText(p.class + " " + Math.round(p.score*100) + "%", x, y > 15 ? y-5 : y+h+15);
                 });
-                
+
                 detectionCount += filtered.length;
-                updateStats(filtered);
-                update3DScene(filtered);
-                updateObjectList(filtered);
-                
+                document.getElementById("stat-detections").textContent = detectionCount;
+
+                // Send detections to backend
+                if (filtered.length > 0 || frameIdCounter % 15 === 0) {
+                    frameIdCounter++;
+                    const payload = {
+                        frame_id: frameIdCounter,
+                        detections: filtered.map(p => ({
+                            label: p.class,
+                            score: p.score,
+                            bbox: {
+                                x: p.bbox[0],
+                                y: p.bbox[1],
+                                width: p.bbox[2],
+                                height: p.bbox[3]
+                            }
+                        })),
+                        camera_active: true
+                    };
+                    try {
+                        const resp = await fetch(BACKEND_URL + "/scene/update", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(payload)
+                        });
+                        if (resp.ok) {
+                            const state = await resp.json();
+                            sceneState = state;
+                            updateSceneFromState(state);
+                        }
+                    } catch (e) {
+                        updateBackendStatus(false);
+                    }
+                }
+
+                // Update local object list
+                updateObjectListLocal(filtered);
+
                 frameCount++;
                 const now = performance.now();
                 if (now - lastFpsTime > 1000) {
@@ -298,217 +426,229 @@
             } catch (e) {
                 console.error("Detect error:", e);
             }
-            
+
             if (stream) requestAnimationFrame(detectLoop);
         }
-        
-        // Update stats
-        function updateStats(preds) {
-            document.getElementById("stat-objects").textContent = objectMeshes.size;
-            document.getElementById("stat-detections").textContent = detectionCount;
-            document.getElementById("stat-points").textContent = pointCloud.length;
-            document.getElementById("scene-info").textContent = objectMeshes.size + " objects";
+
+        function updateObjectListLocal(preds) {
+            if (!preds.length) {
+                if (!sceneState.objects || sceneState.objects.length === 0) {
+                    objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
+                }
+                return;
+            }
+            const unique = {};
+            preds.forEach(p => { unique[p.class] = (unique[p.class] || 0) + 1; });
+            objectList.innerHTML = Object.entries(unique).map(([cls, count]) =>
+                '<div class="object-item"><strong>' + cls + '</strong><div class="muted">' + count + ' detected</div></div>'
+            ).join('');
         }
-        
-        // Update 3D
-        function update3DScene(preds) {
-            const existing = new Set(objectMeshes.keys());
-            console.log("Updating 3D scene with", preds.length, "predictions");
-            
-            preds.forEach((p, i) => {
-                const id = p.class + "_" + i;
-                existing.delete(id);
-                
-                const area = (p.bbox[2] * p.bbox[3]) / (640 * 480);
-                const depth = Math.max(1, 8 - area * 15);
-                const hue = (p.class.charCodeAt(0) * 17) % 360 / 360;
-                const color = new THREE.Color().setHSL(hue, 0.9, 0.5); // More saturated
-                
-                if (!objectMeshes.has(id)) {
-                    console.log("Creating box for:", p.class, "at depth:", depth);
-                    
-                    // Large solid box with emissive glow
-                    const geo = new THREE.BoxGeometry(1, 1, 1); // Much larger
-                    const mat = new THREE.MeshStandardMaterial({ 
-                        color: color, 
-                        transparent: false, 
-                        opacity: 1,
+
+        function createLabelSprite(text, color) {
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = 256;
+            canvas.height = 64;
+            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 8);
+            ctx.fill();
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 22px sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, canvas.width/2, canvas.height/2);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const mat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(1.2, 0.3, 1);
+            return sprite;
+        }
+
+        // RoundRect polyfill for canvas
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (r > w/2) r = w/2;
+                if (r > h/2) r = h/2;
+                this.moveTo(x + r, y);
+                this.lineTo(x + w - r, y);
+                this.quadraticCurveTo(x + w, y, x + w, y + r);
+                this.lineTo(x + w, y + h - r);
+                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                this.lineTo(x + r, y + h);
+                this.quadraticCurveTo(x, y + h, x, y + h - r);
+                this.lineTo(x, y + r);
+                this.quadraticCurveTo(x, y, x + r, y);
+            };
+        }
+
+        function updateSceneFromState(state) {
+            if (!state || !state.objects) return;
+
+            const backendObjects = state.objects || [];
+            const knownIds = new Set();
+
+            // Update object meshes
+            backendObjects.forEach((obj, i) => {
+                const id = obj.object_id || obj.class_name + "_" + i;
+                knownIds.add(id);
+
+                let mesh = objectMeshes.get(id);
+                if (!mesh) {
+                    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                    const hue = (obj.class_name.charCodeAt(0) * 17) % 360 / 360;
+                    const color = new THREE.Color().setHSL(hue, 0.9, 0.55);
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: color,
                         emissive: color,
                         emissiveIntensity: 0.3,
                         metalness: 0.1,
                         roughness: 0.3
                     });
-                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh = new THREE.Mesh(geo, mat);
                     mesh.userData.id = id;
-                    mesh.userData.label = p.class;
+                    mesh.userData.label = obj.class_name;
                     scene.add(mesh);
                     objectMeshes.set(id, mesh);
-                    
-                    // Bright wireframe
-                    const wireGeo = new THREE.BoxGeometry(1.05, 1.05, 1.05);
-                    const wireMat = new THREE.MeshBasicMaterial({ 
-                        color: 0xffffff, 
-                        wireframe: true
-                    });
+
+                    // Wireframe
+                    const wireGeo = new THREE.BoxGeometry(0.42, 0.42, 0.42);
+                    const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
                     const wireMesh = new THREE.Mesh(wireGeo, wireMat);
                     mesh.add(wireMesh);
-                    
-                    // Tall pole to floor (so you can see where it connects)
-                    const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 2, 8);
-                    const poleMat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.5 });
-                    const poleMesh = new THREE.Mesh(poleGeo, poleMat);
-                    poleMesh.position.y = -1;
-                    mesh.add(poleMesh);
-                    
-                    addPoints(p.bbox, depth, color);
+
+                    // Label sprite
+                    const sprite = createLabelSprite(obj.class_name, color);
+                    sprite.position.y = 0.35;
+                    mesh.add(sprite);
                 }
-                
-                // Position the box - closer = more to the right, depth = z
-                const x = (p.bbox[0] + p.bbox[2]/2) / 640 * 8 - 4; // Wider range
-                const z = -depth * 0.5 + 4; // Map depth to z
-                console.log("Position:", id, "x:", x, "z:", z);
-                
-                const mesh = objectMeshes.get(id);
-                mesh.position.set(x, 0.5, z);
+
+                const pos = obj.position || {};
+                const size = obj.size || {};
+                const sx = (size.x || 0.4) * 0.8;
+                const sy = (size.y || 0.4) * 0.8;
+                const sz = (size.z || 0.4) * 0.8;
+                mesh.scale.set(Math.max(0.3, sx), Math.max(0.3, sy), Math.max(0.3, sz));
+                mesh.position.set(pos.x || 0, (pos.y || 0) + sy/2, pos.z || 0);
             });
-            
-            existing.forEach(id => {
-                const m = objectMeshes.get(id);
-                scene.remove(m);
-                m.geometry.dispose();
-                m.material.dispose();
-                objectMeshes.delete(id);
-            });
-            
-            console.log("Total objects in scene:", objectMeshes.size);
-        }
-        
-        // Add points
-        function addPoints(bbox, depth, color) {
-            const x = bbox[0], y = bbox[1], w = bbox[2], h = bbox[3];
-            for (let i = 0; i < 8; i++) {
-                if (pointCloud.length < 500) {
-                    pointCloud.push({
-                        x: x/640 * 10 - 5 + (Math.random()-0.5) * w/640 * 5,
-                        y: y/480 * 5 + (Math.random()-0.5) * h/480 * 2,
-                        z: -depth + 5 + (Math.random()-0.5) * 0.5,
-                        c: color.clone()
-                    });
+
+            // Remove stale objects
+            objectMeshes.forEach((mesh, id) => {
+                if (!knownIds.has(id)) {
+                    scene.remove(mesh);
+                    mesh.geometry.dispose();
+                    if (Array.isArray(mesh.material)) mesh.material.forEach(m => m.dispose());
+                    else mesh.material.dispose();
+                    objectMeshes.delete(id);
                 }
-            }
-            updatePC();
-        }
-        
-        // Update point cloud
-        function updatePC() {
-            if (pointCloudMesh) {
-                scene.remove(pointCloudMesh);
-                pointCloudMesh.geometry.dispose();
-                pointCloudMesh.material.dispose();
-            }
-            if (pointCloud.length === 0) return;
-            
-            const geo = new THREE.BufferGeometry();
-            const pos = new Float32Array(pointCloud.length * 3);
-            const col = new Float32Array(pointCloud.length * 3);
-            
-            pointCloud.forEach((p, i) => {
-                pos[i*3] = p.x; pos[i*3+1] = p.y; pos[i*3+2] = p.z;
-                col[i*3] = p.c.r; col[i*3+1] = p.c.g; col[i*3+2] = p.c.b;
             });
-            
-            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-            
-            const mat = new THREE.PointsMaterial({ size: 0.06, vertexColors: true, transparent: true, opacity: 0.8 });
-            pointCloudMesh = new THREE.Points(geo, mat);
-            scene.add(pointCloudMesh);
-        }
-        
-        // Update list
-        function updateObjectList(preds) {
-            if (!preds.length) {
-                objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
-                return;
+
+            // Update stats
+            document.getElementById("stat-objects").textContent = backendObjects.length;
+            document.getElementById("stat-points").textContent = state.map_points || 0;
+            document.getElementById("scene-info").textContent = backendObjects.length + " objects mapped";
+
+            // Update events
+            if (state.recent_events && state.recent_events.length > 0) {
+                const eventsDiv = document.getElementById("events-list");
+                eventsDiv.innerHTML = state.recent_events.slice(0, 10).map(e =>
+                    '<div>' + new Date(e.timestamp * 1000).toLocaleTimeString() + ' - ' + e.description + '</div>'
+                ).join('');
             }
-            objectList.innerHTML = preds.map(p => 
-                '<div class="object-item"><strong>' + p.class + '</strong><div class="muted">' + Math.round(p.score*100) + '% confidence</div></div>'
-            ).join('');
+
+            // Update object list from backend
+            if (backendObjects.length > 0) {
+                const counts = {};
+                backendObjects.forEach(o => { counts[o.class_name] = (counts[o.class_name] || 0) + 1; });
+                objectList.innerHTML = Object.entries(counts).map(([cls, count]) =>
+                    '<div class="object-item"><strong>' + cls + '</strong><div class="muted">' + count + ' in scene</div></div>'
+                ).join('');
+            }
         }
-        
-        // Reset
-        function resetScene() {
-            objectMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
-            objectMeshes.clear();
-            if (pointCloudMesh) { scene.remove(pointCloudMesh); pointCloudMesh.geometry.dispose(); pointCloudMesh.material.dispose(); }
-            pointCloud = [];
-            detectionCount = 0;
-            document.getElementById("stat-objects").textContent = "0";
-            document.getElementById("stat-points").textContent = "0";
-            document.getElementById("stat-detections").textContent = "0";
-            document.getElementById("scene-info").textContent = "0 objects";
-            objectList.innerHTML = '<div class="object-item muted">Point camera at objects</div>';
-        }
-        
-        // Add floor plane
-        const floorGeo = new THREE.PlaneGeometry(20, 20);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x0a1428, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = 0;
-        scene.add(floor);
-        
-        // Events
-        document.getElementById("start-btn").addEventListener("click", function() { stream ? stopCamera() : startCamera(); });
-        document.getElementById("reset-btn").addEventListener("click", resetScene);
-        
-        // Init
-        loadModel();
-        
-        // Create demo objects to show 3D view is working
-        function createDemoScene() {
-            console.log("Creating demo scene...");
-            
-            // Create 3 demo boxes
-            const demoData = [
-                { x: -3, y: 0.5, z: 2, color: new THREE.Color().setHSL(0.55, 0.8, 0.5) },  // blue
-                { x: 0, y: 0.5, z: 0, color: new THREE.Color().setHSL(0.33, 0.8, 0.5) },   // green
-                { x: 3, y: 0.5, z: -2, color: new THREE.Color().setHSL(0.66, 0.8, 0.5) }   // purple
-            ];
-            
-            demoData.forEach((d, i) => {
-                const geo = new THREE.BoxGeometry(1, 1, 1);
-                const mat = new THREE.MeshStandardMaterial({ 
-                    color: d.color, 
-                    emissive: d.color,
-                    emissiveIntensity: 0.2,
-                    metalness: 0.1,
-                    roughness: 0.3
+
+        // Search
+        document.getElementById("search-btn").addEventListener("click", async () => {
+            const query = document.getElementById("search-input").value.trim();
+            if (!query) return;
+            const resultsDiv = document.getElementById("search-results");
+            resultsDiv.innerHTML = '<div class="search-result">Searching...</div>';
+            try {
+                const resp = await fetch(BACKEND_URL + "/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query, top_k: 5 })
                 });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.set(d.x, d.y, d.z);
-                mesh.userData.id = "demo_" + i;
-                scene.add(mesh);
-                objectMeshes.set("demo_" + i, mesh);
-                
-                // Wireframe
-                const wireGeo = new THREE.BoxGeometry(1.05, 1.05, 1.05);
-                const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-                mesh.add(new THREE.Mesh(wireGeo, wireMat));
-                
-                // Pole
-                const poleGeo = new THREE.CylinderGeometry(0.02, 0.02, 2, 8);
-                const poleMat = new THREE.MeshBasicMaterial({ color: d.color, transparent: true, opacity: 0.5 });
-                const poleMesh = new THREE.Mesh(poleGeo, poleMat);
-                poleMesh.position.y = -1;
-                mesh.add(poleMesh);
-            });
-            
-            console.log("Demo scene created with", objectMeshes.size, "objects");
-            updateStats([]);
-        }
-        
-        createDemoScene();
+                const data = await resp.json();
+                if (data.results && data.results.length > 0) {
+                    resultsDiv.innerHTML = data.results.map(r =>
+                        '<div class="search-result">Found <span class="highlight">' + r.class_name + '</span> at (' +
+                        (r.position ? r.position.x.toFixed(2) + ", " + r.position.y.toFixed(2) + ", " + r.position.z.toFixed(2) : "?") +
+                        ') — ' + Math.round(r.similarity * 100) + '% match</div>'
+                    ).join('');
+                } else {
+                    resultsDiv.innerHTML = '<div class="search-result">No results found for "' + query + '"</div>';
+                }
+            } catch (e) {
+                resultsDiv.innerHTML = '<div class="search-result">Search failed: ' + e.message + '</div>';
+            }
+        });
+        document.getElementById("search-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") document.getElementById("search-btn").click();
+        });
+
+        // Query
+        document.getElementById("query-btn").addEventListener("click", async () => {
+            const question = document.getElementById("query-input").value.trim();
+            if (!question) return;
+            const responseDiv = document.getElementById("query-response");
+            responseDiv.textContent = "Thinking...";
+            try {
+                const resp = await fetch(BACKEND_URL + "/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, context: true })
+                });
+                const data = await resp.json();
+                responseDiv.textContent = data.response || "No response";
+            } catch (e) {
+                responseDiv.textContent = "Query failed: " + e.message;
+            }
+        });
+        document.getElementById("query-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") document.getElementById("query-btn").click();
+        });
+
+        // Camera controls
+        document.getElementById("start-btn").addEventListener("click", function() {
+            stream ? stopCamera() : startCamera();
+        });
+
+        document.getElementById("reset-btn").addEventListener("click", async () => {
+            try {
+                await fetch(BACKEND_URL + "/scene/reset", { method: "POST" });
+            } catch (e) {}
+        });
+
+        // Init
+        connectWS();
+        loadModel();
+
+        // Periodic state fetch as fallback
+        setInterval(async () => {
+            if (!backendConnected) {
+                try {
+                    const resp = await fetch(BACKEND_URL + "/state");
+                    if (resp.ok) {
+                        updateBackendStatus(true);
+                        const state = await resp.json();
+                        sceneState = state;
+                        updateSceneFromState(state);
+                    }
+                } catch (e) {}
+            }
+        }, 5000);
+
         console.log("AXIS: Ready!");
     </script>
 </body>
