@@ -68,7 +68,13 @@
         .query-row input:focus { border-color: #5bd2ff; }
         .query-row button { padding: 10px 16px; font-size: 13px; }
         .query-response { padding: 8px; margin-top: 6px; background: #08101f; border-radius: 4px; font-size: 12px; color: #e9efff; min-height: 20px; }
-        .text-label { position: absolute; color: white; font-size: 11px; font-weight: bold; text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6); pointer-events: none; transform: translate(-50%, -100%); padding: 2px 6px; background: rgba(0,0,0,0.5); border-radius: 4px; white-space: nowrap; }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.5s forwards; max-width: 300px; pointer-events: auto; }
+        .toast.detection { background: #1a3a5c; border: 1px solid #2d6a9f; color: #9bd7ff; }
+        .toast.info { background: #1a2744; border: 1px solid #1f4372; color: #7c82ff; }
+        .toast.error { background: #441a1a; border: 1px solid #721f1f; color: #ff7c7c; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
     </style>
 </head>
 <body>
@@ -169,6 +175,8 @@
         </div>
     </div>
 
+    <div id="toast-container"></div>
+
     <script type="importmap">
     {
         "imports": {
@@ -246,11 +254,6 @@
 
         // Objects
         const objectMeshes = new Map();
-        let pointCloudMesh = null;
-        let pointCloud = [];
-
-        // Label sprite cache
-        const labelSprites = new Map();
 
         function resize() {
             const w = threeContainer.clientWidth;
@@ -270,6 +273,15 @@
             renderer.render(scene, camera);
         }
         animate();
+
+        function showToast(msg, type) {
+            const container = document.getElementById("toast-container");
+            const el = document.createElement("div");
+            el.className = "toast " + (type || "info");
+            el.textContent = msg;
+            container.appendChild(el);
+            setTimeout(() => { if (el.parentNode) el.remove(); }, 3000);
+        }
 
         function updateBackendStatus(connected) {
             backendConnected = connected;
@@ -412,6 +424,10 @@
                     }
                 }
 
+                if (filtered.length > 0) {
+                    console.log("AXIS detected:", filtered.map(p => p.class + "(" + Math.round(p.score*100) + "%)").join(", "));
+                }
+
                 // Update local object list
                 updateObjectListLocal(filtered);
 
@@ -444,16 +460,15 @@
             ).join('');
         }
 
-        function createLabelSprite(text, color) {
+        function createLabelSprite(text) {
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
             canvas.width = 256;
-            canvas.height = 64;
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
-            ctx.roundRect(8, 8, canvas.width - 16, canvas.height - 16, 8);
-            ctx.fill();
+            canvas.height = 72;
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.fillRect(4, 4, canvas.width - 8, canvas.height - 8);
             ctx.fillStyle = "#fff";
-            ctx.font = "bold 22px sans-serif";
+            ctx.font = "bold 24px sans-serif";
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
             ctx.fillText(text, canvas.width/2, canvas.height/2);
@@ -462,25 +477,8 @@
             texture.needsUpdate = true;
             const mat = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
             const sprite = new THREE.Sprite(mat);
-            sprite.scale.set(1.2, 0.3, 1);
+            sprite.scale.set(2, 0.5, 1);
             return sprite;
-        }
-
-        // RoundRect polyfill for canvas
-        if (!CanvasRenderingContext2D.prototype.roundRect) {
-            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-                if (r > w/2) r = w/2;
-                if (r > h/2) r = h/2;
-                this.moveTo(x + r, y);
-                this.lineTo(x + w - r, y);
-                this.quadraticCurveTo(x + w, y, x + w, y + r);
-                this.lineTo(x + w, y + h - r);
-                this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-                this.lineTo(x + r, y + h);
-                this.quadraticCurveTo(x, y + h, x, y + h - r);
-                this.lineTo(x, y + r);
-                this.quadraticCurveTo(x, y, x + r, y);
-            };
         }
 
         function updateSceneFromState(state) {
@@ -489,48 +487,52 @@
             const backendObjects = state.objects || [];
             const knownIds = new Set();
 
-            // Update object meshes
+            const currentIds = new Set(objectMeshes.keys());
+
             backendObjects.forEach((obj, i) => {
                 const id = obj.object_id || obj.class_name + "_" + i;
                 knownIds.add(id);
 
+                let isNew = false;
                 let mesh = objectMeshes.get(id);
                 if (!mesh) {
-                    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                    isNew = true;
                     const hue = (obj.class_name.charCodeAt(0) * 17) % 360 / 360;
                     const color = new THREE.Color().setHSL(hue, 0.9, 0.55);
+
                     const mat = new THREE.MeshStandardMaterial({
                         color: color,
                         emissive: color,
-                        emissiveIntensity: 0.3,
-                        metalness: 0.1,
+                        emissiveIntensity: 0.4,
+                        metalness: 0.2,
                         roughness: 0.3
                     });
-                    mesh = new THREE.Mesh(geo, mat);
+                    mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat);
                     mesh.userData.id = id;
                     mesh.userData.label = obj.class_name;
                     scene.add(mesh);
                     objectMeshes.set(id, mesh);
 
-                    // Wireframe
-                    const wireGeo = new THREE.BoxGeometry(0.42, 0.42, 0.42);
                     const wireMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-                    const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+                    const wireMesh = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.05, 1.05), wireMat);
                     mesh.add(wireMesh);
 
-                    // Label sprite
-                    const sprite = createLabelSprite(obj.class_name, color);
-                    sprite.position.y = 0.35;
+                    const sprite = createLabelSprite(obj.class_name);
+                    sprite.position.y = 0.8;
                     mesh.add(sprite);
+                }
+
+                if (isNew) {
+                    showToast("Detected: " + obj.class_name, "detection");
                 }
 
                 const pos = obj.position || {};
                 const size = obj.size || {};
-                const sx = (size.x || 0.4) * 0.8;
-                const sy = (size.y || 0.4) * 0.8;
-                const sz = (size.z || 0.4) * 0.8;
-                mesh.scale.set(Math.max(0.3, sx), Math.max(0.3, sy), Math.max(0.3, sz));
-                mesh.position.set(pos.x || 0, (pos.y || 0) + sy/2, pos.z || 0);
+                const sx = Math.max(0.5, (size.x || 0.4) * 1.5);
+                const sy = Math.max(0.5, (size.y || 0.4) * 1.5);
+                const sz = Math.max(0.5, (size.z || 0.4) * 1.5);
+                mesh.scale.set(sx, sy, sz);
+                mesh.position.set(pos.x || 0, (pos.y || 0) + sy * 0.5, pos.z || 0);
             });
 
             // Remove stale objects
